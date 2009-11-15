@@ -29,7 +29,7 @@ clfft: $(OBJFILES)
 	g++ $(CXXFLAGS)  -o clfft $(OBJFILES)  $(INCLUDES) $(LIB)  
 
 %.o: %.c
-	g++ $(CXXFLAGS) -c -o $@ $< $(INCLUDES) $(LIB)
+	g++ $(CXXFLAGS) -c -o $@ $< $(INCLUDES) 
 
 all:clfft
 
