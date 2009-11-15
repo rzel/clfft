@@ -1,10 +1,12 @@
 
 #include "clutil.h"
 
+#define BLOCK_SIZE 256
+#define ARR_SIZE (1024*1024)
 
 int main(int argc, char * argv[])
 {
-  cl_int ciDeviceCount;
+  cl_uint ciDeviceCount;
   cl_device_id device;
   cl_program  cpProgram;
   cl_kernel kernobj;
