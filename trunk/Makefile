@@ -26,16 +26,13 @@ LIB += -lOpenCL -loclUtil -lshrutil
 OBJFILES := $(patsubst %.c,%.o, $(wildcard *.c))
 
 clfft: $(OBJFILES)
-	echo "Object files:" $(OBJFILES)
-	g++ $(CXXFLAGS)  -o clfft  $(INCLUDES) $(LIB) $(OBJFILES) 
+	g++ $(CXXFLAGS)  -o clfft $(OBJFILES)  $(INCLUDES) $(LIB)  
 
 %.o: %.c
-	g++ $(CXXFLAGS) -o $@ $< $(INCLUDES) $(LIB)
-	echo "Object files:" $(OBJFILES)
+	g++ $(CXXFLAGS) -c -o $@ $< $(INCLUDES) $(LIB)
 
-
-all: clfft
+all:clfft
 
 
 clean:
-	rm *.o a.out
+	rm *.o clfft
