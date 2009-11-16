@@ -1,8 +1,7 @@
 
 #include "clutil.h"
 
-#define BLOCK_SIZE 256
-#define ARR_SIZE (1024*1024)
+#include "vecAdd.h"
 
 int main(int argc, char * argv[])
 {
@@ -15,9 +14,15 @@ int main(int argc, char * argv[])
   size_t localWorkSize[] = {BLOCK_SIZE};
   size_t globalWorkSize[]= {shrRoundUp(BLOCK_SIZE, ARR_SIZE + BLOCK_SIZE -1)};
 
-  
-  init_cl_context(CL_DEVICE_TYPE_GPU);
 
+  printf("Initializing CL Context..\n");
+  if(init_cl_context(CL_DEVICE_TYPE_GPU) !=CL_SUCCESS)
+    {
+      printf("Error ! Aborting..\n");
+      exit(1);
+    }
+
+  printf("Getting Device Count..\n");
   getDeviceCount(&ciDeviceCount);
 
   if(!ciDeviceCount)
@@ -26,9 +31,11 @@ int main(int argc, char * argv[])
       return -1;
     }
 
+  printf("Creating Command Queue...\n");
   createCommandQueue(&device, 1);
 
-  if(compile_program(argv,"", "kernels/vecAdd.cl", &cpProgram) != CL_SUCCESS)
+  printf("Compiling Program..\n");
+  if(compile_program(argv,"vecAdd.h", "kernels/vecAdd.cl", &cpProgram) != CL_SUCCESS)
     {
       printf("Compilation failed.\n");
       return -1;
@@ -92,12 +99,10 @@ int main(int argc, char * argv[])
   clSetKernelArg(kernobj, 2, sizeof(cl_mem), (void*) &d_C);
 
 
-  runKernel(kernobj, 1,  		/* Work Dimension. */
+  runKernel(&kernobj, 1,  		/* Work Dimension. */
 	    localWorkSize,
 	    globalWorkSize);
 
-
-  
   copyfromDevice(d_C, sizeof(float) * ARR_SIZE, h_C, 1);
 
   for(int i=0 ;i <ARR_SIZE; i++ )

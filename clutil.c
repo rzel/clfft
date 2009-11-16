@@ -19,9 +19,11 @@ cl_int init_cl_context(cl_device_type device_type)
 				      NULL, /* user data to be passed to err fn */
 				      &ciErrNum);
 
+  fprintf(stdout,"After createContext ..\n");
+
   if(ciErrNum != CL_SUCCESS)
     {
-      fprintf(stderr,"Error: Context Creation Failed!\n");
+      fprintf(stderr,"Error: Context Creation Failed:%d!\n", ciErrNum);
     }
 
   return ciErrNum;
@@ -82,7 +84,7 @@ cl_int compile_program(char * argv[] , char * header_file,
   char * header = oclLoadProgSource( header_path, "" , &program_length);
   char * source_path, * source;
 
-  if(!header)
+  if(header == NULL)
     {
       fprintf(stderr,"Error: Failed to load the header %s!\n", header_path);
       return -1000;
@@ -178,16 +180,17 @@ cl_mem createDeviceBuffer(cl_mem_flags flags, size_t size,void * host_ptr,
 
 
 
-cl_int runKernel(cl_kernel kernobj, cl_uint workDim, size_t * localWorkSize,
-		 size_t * globalWorkSize)
+cl_int runKernel(cl_kernel *kernobj, cl_uint workDim, size_t localWorkSize[],
+		 size_t  globalWorkSize[])
 {
 
-  cl_event GPUExecution;
+  cl_event GPUExecution[0];
   cl_int ciErrNum;
 
-  ciErrNum = clEnqueueNDRangeKernel(commandQueue, kernobj, workDim, 0, 
+  fprintf(stderr,"Before Kernel ..\n");
+  ciErrNum = clEnqueueNDRangeKernel(commandQueue, *kernobj, workDim, 0, 
 			 globalWorkSize, localWorkSize, 0, NULL,
-			 &GPUExecution);
+			 &GPUExecution[0]);
 
   if(ciErrNum != CL_SUCCESS)
     {
