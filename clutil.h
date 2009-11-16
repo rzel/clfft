@@ -25,8 +25,11 @@ cl_int  createKernel(cl_program cpProgram,
 cl_mem createDeviceBuffer(cl_mem_flags flags, size_t size,void * host_ptr,
 			  int copytoDevice);
 
-cl_int runKernel(cl_kernel * kernobj, cl_uint workDim, size_t * localWorkSize,
+cl_int runKernel(cl_kernel  kernobj, cl_uint workDim, size_t * localWorkSize,
 		 size_t * globalWorkSize);
 
 void copyfromDevice(cl_mem d_Mem, size_t size, void * h_Mem, cl_int deviceCount);
+
+extern cl_command_queue commandQueue;
+extern cl_context cxContext ;
 #endif

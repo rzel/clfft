@@ -3,7 +3,7 @@
 
 #define BLOCK_SIZE 256
 
-#define ARR_SIZE (1024 * 1024) 	// Define a 1 MB array.
+#define ARR_SIZE (1024) 	// Define a 1 MB array.
 
 
 #endif
