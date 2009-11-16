@@ -4,8 +4,8 @@
 */
 #include "clutil.h"
 
-static cl_context cxContext = NULL;
-static cl_command_queue commandQueue;
+cl_context cxContext = NULL;
+cl_command_queue commandQueue;
 
 
 
@@ -151,7 +151,7 @@ cl_mem createDeviceBuffer(cl_mem_flags flags, size_t size,void * host_ptr,
 {
   cl_int ciErrNum = CL_SUCCESS;
   cl_mem d_mem;
-  clCreateBuffer(cxContext,
+  d_mem = clCreateBuffer(cxContext,
 		 flags,
 		 size,
 		 host_ptr,
@@ -165,14 +165,9 @@ cl_mem createDeviceBuffer(cl_mem_flags flags, size_t size,void * host_ptr,
 
   if(copytoDevice)
     {
-      clEnqueueWriteBuffer(commandQueue, d_mem, 
-			   CL_TRUE, 
-			   0, 
-			   size,
-			   host_ptr, 
-			   0, 
-			   NULL, 
-			   NULL);
+      fprintf(stderr,"Copyting to device memory.\n");
+      clEnqueueWriteBuffer(commandQueue, d_mem, CL_TRUE, 0, size,
+			   host_ptr, 0, NULL, NULL);
     }
 
   return d_mem;
@@ -180,17 +175,18 @@ cl_mem createDeviceBuffer(cl_mem_flags flags, size_t size,void * host_ptr,
 
 
 
-cl_int runKernel(cl_kernel *kernobj, cl_uint workDim, size_t localWorkSize[],
+cl_int runKernel(cl_kernel kernobj, cl_uint workDim, size_t localWorkSize[],
 		 size_t  globalWorkSize[])
 {
 
-  cl_event GPUExecution[0];
+  cl_event GPUExecution;
   cl_int ciErrNum;
 
-  fprintf(stderr,"Before Kernel ..\n");
-  ciErrNum = clEnqueueNDRangeKernel(commandQueue, *kernobj, workDim, 0, 
+  fprintf(stderr,"Before Kernel .. kernobj:%x globalWorkSize:%x localWorkSize:%x \n", kernobj, *globalWorkSize, *localWorkSize);
+  ciErrNum = clEnqueueNDRangeKernel(commandQueue, kernobj, workDim, NULL, 
 			 globalWorkSize, localWorkSize, 0, NULL,
-			 &GPUExecution[0]);
+			 NULL);
+  fprintf(stderr,"After kernel..\n");
 
   if(ciErrNum != CL_SUCCESS)
     {

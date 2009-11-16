@@ -62,7 +62,6 @@ int main(int argc, char * argv[])
       return -1;
     }
   h_C = (float *) malloc(sizeof(float) * ARR_SIZE);
-
   if(h_C == NULL)
     {
      printf("Error could not allocate memory!\n");
@@ -88,7 +87,7 @@ int main(int argc, char * argv[])
 			   h_B,
 			   true);
   
-  d_C = createDeviceBuffer(CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+  d_C = createDeviceBuffer(CL_MEM_WRITE_ONLY ,
 			   sizeof(float) * ARR_SIZE,
 			   h_C,
 			   true);
@@ -99,11 +98,11 @@ int main(int argc, char * argv[])
   clSetKernelArg(kernobj, 2, sizeof(cl_mem), (void*) &d_C);
 
 
-  runKernel(&kernobj, 1,  		/* Work Dimension. */
+  runKernel(kernobj, 1,  		/* Work Dimension. */
 	    localWorkSize,
 	    globalWorkSize);
 
-  copyfromDevice(d_C, sizeof(float) * ARR_SIZE, h_C, 1);
+  copyfromDevice(d_C, sizeof(float) * ARR_SIZE, h_C, true);
 
   for(int i=0 ;i <ARR_SIZE; i++ )
     {
