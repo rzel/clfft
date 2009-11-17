@@ -24,15 +24,17 @@ LIB  := -L/usr/lib64/ -L/opt/opencl-sdk/OpenCL/common/lib  -L/opt/opencl-sdk/sha
 LIB += -lOpenCL -loclUtil -lshrutil
 
 OBJFILES := $(patsubst %.cpp,%.o, $(wildcard *.cpp))
+HFILES := $(wildcard *.h)
 
 clfft: $(OBJFILES)
-	g++ $(CXXFLAGS)  -o clfft $(OBJFILES)  $(INCLUDES) $(LIB)  
+	@g++ $(CXXFLAGS)  -o clfft $(OBJFILES)  $(INCLUDES) $(LIB)  
 
-%.o: %.cpp
-	g++ $(CXXFLAGS) -ggdb3 -c -o $@ $< $(INCLUDES) 
+%.o: %.cpp $(HFILES) 
+	@g++ $(CXXFLAGS) -ggdb3 -c -o $@ $< $(INCLUDES) 
 
 all:clfft
 
 
 clean:
 	rm *.o clfft
+
