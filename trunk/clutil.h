@@ -14,7 +14,7 @@ cl_int getDeviceCount(cl_uint& ciDeviceCount);
 cl_int createCommandQueue(const unsigned deviceId);
 
 cl_int compileProgram(const char* const argv[] , const char* const header_file, 
-		       const char* const kernel_file,
+		      const char* const kernel_file, const unsigned deviceid,
 		       cl_program& cpProgram); /* Program object stored in here. */
 
 

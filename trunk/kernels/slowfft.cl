@@ -9,7 +9,7 @@ slowfft( __global float* f_real, __global float* f_imag,
 	int n, int is)
 {
   const float PI = 3.14159265359;
-  const double ph = is*2.0*PI/n;
+  const float ph = is*2.0*PI/n;
   float real = 0.0, imag = 0.0;
 
   int bx = get_group_id(0);
