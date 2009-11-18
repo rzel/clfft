@@ -112,9 +112,9 @@ compileProgram(const char* const argv[] , const char* const header_file,
 
     cl_device_id devicelist[]= { oclGetDev(cxContext, deviceid)};
     ciErrNum = clBuildProgram(cpProgram,
-        		      1, 	/* Number of devices for which we need to do this */
-			      devicelist, /* Device List */
-			      "-cl-mad-enable",
+        		      0, 	/* Number of devices for which we need to do this */
+			      NULL, /* Device List */
+			      "",
 			      NULL, /* ptr to function */
 			      NULL); /* User data to pass to ptrfn */
 
@@ -137,7 +137,7 @@ compileProgram(const char* const argv[] , const char* const header_file,
 void printCompilationErrors(const cl_program& cpProgram, const unsigned deviceId)
 {
    size_t len;
-   char buffer[2048];
+   char buffer[4096];
    cl_int ciErrNum = CL_SUCCESS;
    const cl_device_id device = oclGetDev(cxContext, deviceId);
    
@@ -167,7 +167,7 @@ createKernel(const cl_program& cpProgram,
     cl_int ciErrNum = CL_SUCCESS;
     kernobj = clCreateKernel(cpProgram, kernelName, &ciErrNum);
     if (ciErrNum != CL_SUCCESS) {
-        fprintf(stderr, "Error: Failed to Create Kernel: %s!\n", kernelName);
+      fprintf(stderr, "Error: Failed to Create Kernel: %s %d!\n", kernelName, ciErrNum);
     }
     return ciErrNum;
 }

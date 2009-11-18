@@ -1,7 +1,7 @@
 
 #include "clutil.h"
 
-#include "vecAdd.h"
+#include "fft.h"
 
 int 
 main(const int argc, const char* argv[])
@@ -53,6 +53,7 @@ main(const int argc, const char* argv[])
     cl_kernel kernobj;
     if (createKernel(cpProgram,"slowfft", kernobj) != CL_SUCCESS) {
         printf("Kernel Creation failure.\n");
+	printCompilationErrors(cpProgram, 1);
         return -1;
     }
   
@@ -118,8 +119,8 @@ main(const int argc, const char* argv[])
     clSetKernelArg(kernobj, 1, sizeof(cl_mem), (void*) &d_Fimag);
     clSetKernelArg(kernobj, 2, sizeof(cl_mem), (void*) &d_Rreal);
     clSetKernelArg(kernobj, 3, sizeof(cl_mem), (void*) &d_Rimag);
-    clSetKernelArg(kernobj, 4, sizeof(int), (void*)n);
-    clSetKernelArg(kernobj, 5, sizeof(int), (void*)is);
+    clSetKernelArg(kernobj, 4, sizeof(int), &n);
+    clSetKernelArg(kernobj, 5, sizeof(int), &is);
     
 
 
@@ -133,6 +134,6 @@ main(const int argc, const char* argv[])
     printf("Results : \n");
     for (unsigned i = 0; i <ARR_SIZE; ++i) 
       {
-	printf("%f + i%f ", h_Rreal[i], h_Rimag); 
+	printf("%f + i%f \n", h_Rreal[i], h_Rimag); 
       }
 }
