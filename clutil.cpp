@@ -119,10 +119,43 @@ compileProgram(const char* const argv[] , const char* const header_file,
 
     if (ciErrNum != CL_SUCCESS) {
         fprintf(stderr,"Error: Compilation Failure! \n");
+	switch(ciErrNum)
+	  {
+	  case CL_INVALID_DEVICE: fprintf(stderr,"Build Failure: INVALID_DEVICE.\n"); break;
+	  case CL_INVALID_VALUE: fprintf(stderr,"Build Failure: INVALID_VALUE.\n"); break;
+	  case CL_INVALID_PROGRAM: fprintf(stderr,"Build Failure: INVALID_PROGRAM.\n"); break;
+	  case CL_DEVICE_NOT_FOUND : fprintf(stderr,"Build Failure: Device not Found.\n"); break;
+	  default: fprintf(stderr,"Build Failure: %d.\n",ciErrNum); break;
+	  }
+
     }
 
     return ciErrNum;
 }
+
+void printCompilationErrors(const cl_program& cpProgram, const unsigned deviceId)
+{
+   size_t len;
+   char buffer[2048];
+   cl_int ciErrNum = CL_SUCCESS;
+   const cl_device_id device = oclGetDev(cxContext, deviceId);
+   
+   if((ciErrNum = clGetProgramBuildInfo(cpProgram, device, CL_PROGRAM_BUILD_LOG,
+					sizeof(buffer), buffer, &len)) != CL_SUCCESS)
+     {
+       switch(ciErrNum)
+	 {
+	 case CL_INVALID_DEVICE: fprintf(stderr,"Unable to get Build info: INVALID_DEVICE.\n"); break;
+	 case CL_INVALID_VALUE: fprintf(stderr,"Unable to get Build info: INVALID_VALUE.\n"); break;
+	 case CL_INVALID_PROGRAM: fprintf(stderr,"Unable to get Build info: INVALID_PROGRAM.\n"); break;
+	 default: fprintf(stderr,"Unable to get Build info.\n"); break;
+	 }
+     }
+
+   fprintf(stderr,"Error %d:%s\n",ciErrNum, buffer);
+  
+}
+
 
 cl_int  
 createKernel(const cl_program& cpProgram, 
@@ -171,8 +204,6 @@ cl_int
 runKernel(const cl_kernel kernobj, const cl_uint workDim, 
           const size_t localWorkSize[], const size_t globalWorkSize[])
 {
-
-    cl_event GPUExecution;
 
     const cl_int ciErrNum = clEnqueueNDRangeKernel(commandQueue, kernobj, 
                                                    workDim, NULL, 

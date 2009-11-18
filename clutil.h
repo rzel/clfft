@@ -31,6 +31,8 @@ cl_int runKernel(const cl_kernel  kernobj, const cl_uint workDim,
 void copyFromDevice(const cl_mem dMem, const size_t size, 
                     void* hMem, const cl_int deviceCount);
 
+void printCompilationErrors(const cl_program& cpProgram, const unsigned deviceId);
+
 extern cl_command_queue commandQueue;
 extern cl_context cxContext ;
 #endif
