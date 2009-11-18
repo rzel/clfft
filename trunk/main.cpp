@@ -16,10 +16,10 @@ main(const int argc, const char* argv[])
       }
 
     int n = atoi(argv[1]);
-    int is = 1;
+    int is = -1;
     if(argc == 3)		// This is a weak check, but should do for now.
       {
-	is = -1;
+	is = 1;
       }
 
     printf("Initializing CL Context..\n");
@@ -85,8 +85,8 @@ main(const int argc, const char* argv[])
 
     printf("Initializing Arrays.. \n");
     for (unsigned i = 0 ; i < ARR_SIZE; ++i) {
-        h_Freal[i] = 1.0;
-        h_Fimag[i] = 1.0;
+        h_Freal[i] = i;
+        h_Fimag[i] = i;
         h_Rreal[i] = 0.0;
 	h_Rimag[i] = 0.0;
     }
@@ -134,6 +134,6 @@ main(const int argc, const char* argv[])
     printf("Results : \n");
     for (unsigned i = 0; i <ARR_SIZE; ++i) 
       {
-	printf("%f + i%f \n", h_Rreal[i], h_Rimag); 
+	printf("%f + i%f \n", h_Rreal[i], h_Rimag[i]); 
       }
 }
