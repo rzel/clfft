@@ -43,7 +43,7 @@ main(const int argc, const char* argv[])
 
     printf("Compiling Program..\n");
     cl_program cpProgram;
-    if (compileProgram(argv, "fft.h", "kernels/slowfft.cl", cpProgram) != 
+    if (compileProgram(argv, "fft.h", "kernels/slowfft.cl", 1, cpProgram) != 
                                                                   CL_SUCCESS) {
         printf("Compilation failed.\n");
 	printCompilationErrors(cpProgram, 1);

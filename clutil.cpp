@@ -74,7 +74,7 @@ createCommandQueue(const unsigned deviceId)
 
 cl_int 
 compileProgram(const char* const argv[] , const char* const header_file, 
-               const char* const kernel_file,
+               const char* const kernel_file,const unsigned deviceid,
                cl_program& cpProgram) /* Program object stored in here. */
 {
     const char* header_path = shrFindFilePath(header_file, argv[0]);
@@ -110,9 +110,10 @@ compileProgram(const char* const argv[] , const char* const header_file,
       
     /* Build program */
 
+    cl_device_id devicelist[]= { oclGetDev(cxContext, deviceid)};
     ciErrNum = clBuildProgram(cpProgram,
-        		      0, 	/* Number of devices for which we need to do this */
-			      NULL, /* Device List */
+        		      1, 	/* Number of devices for which we need to do this */
+			      devicelist, /* Device List */
 			      "-cl-mad-enable",
 			      NULL, /* ptr to function */
 			      NULL); /* User data to pass to ptrfn */
