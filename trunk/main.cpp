@@ -134,6 +134,6 @@ main(const int argc, const char* argv[])
     printf("Results : \n");
     for (unsigned i = 0; i <ARR_SIZE; ++i) 
       {
-	printf("%f + i%f \n", h_Rreal[i], h_Rimag[i]); 
+	printf("%f + %fi \n", h_Rreal[i], h_Rimag[i]); 
       }
 }
