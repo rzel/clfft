@@ -27,8 +27,8 @@ cooleyTukey( const char* const argv[], const unsigned n, const unsigned size)
               localWorkSize,
               globalWorkSize);
 
-    copyFromDevice(d_Freal, sizeof(float) * ARR_SIZE, h_Rreal, true);
-    copyFromDevice(d_Fimag, sizeof(float) * ARR_SIZE, h_Rimag, true);
+    copyFromDevice(d_Rreal, sizeof(float) * ARR_SIZE, h_Rreal, true);
+    copyFromDevice(d_Rimag, sizeof(float) * ARR_SIZE, h_Rimag, true);
 
     for (unsigned i = 0; i < ARR_SIZE; ++i) {
         printf("%f + i%f \n", h_Rreal[i], h_Rimag[i]);
