@@ -2,14 +2,11 @@
 #define KERNELS_H
 
 int
-cooleyTukey(const char* const argv[], float* hFreal, float* hFimag,
-            float* hRreal, float* hRimag,
-            const unsigned n);
+cooleyTukey(const char* const argv[], const unsigned n, const unsigned size);
 
 int
-slowFFT( const char* const argv[], float* hFreal, float* hFimag,
-         float* hRreal, float* hRimag,
-         const unsigned n, const int is);
+slowFFT(const char* const argv[], const unsigned n, const int is, 
+                                             const unsigned size);
 
 
 #endif

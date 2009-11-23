@@ -4,14 +4,119 @@
 */
 #include "clutil.h"
 
-cl_context cxContext = NULL;
-cl_command_queue commandQueue;
+// global variables
+cl_context cxContext = 0;
+//TODO:: to be made an array of MAX_GPU
+cl_kernel kernel = 0;
+cl_command_queue commandQueue = 0;
+cl_event event = 0;
+cl_program cpProgram = 0;
+
+
+// host memory
+// h_Freal and h_Fimag represent the input signal to be transformed.
+// h_Rreal and h_Rimag represent the transformed output.
+float*  h_Freal = 0;
+float*  h_Fimag = 0;
+float*  h_Rreal = 0;
+float*  h_Rimag = 0;
+
+// device memory
+// d_Freal and d_Fimag represent the input signal to be transformed.
+// d_Rreal and d_Rimag represent the transformed output.
+cl_mem d_Freal = 0;
+cl_mem d_Fimag = 0;
+cl_mem d_Rreal = 0;
+cl_mem d_Rimag = 0;
+
+double 
+executionTime()
+{
+    cl_ulong start, end;
+    assert(event);
+    clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, 
+                            sizeof(cl_ulong), &end, NULL);
+    clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, 
+                            sizeof(cl_ulong), &start, NULL);
+
+    return (double)1.0e-9 * (end - start); // convert nanoseconds to seconds 
+}
+
+void
+allocateHostMemory(const unsigned size)
+{
+    h_Freal = (float *) malloc(sizeof(float) * size);
+    checkError((h_Freal != NULL), shrTRUE, "Could not allocate memory");
+
+    h_Fimag = (float *) malloc(sizeof(float) * size);
+    checkError((h_Fimag != NULL), shrTRUE, "Could not allocate memory");
+
+    h_Rreal = (float *) malloc(sizeof(float) * size);
+    checkError((h_Rreal != NULL), shrTRUE, "Could not allocate memory");
+
+    h_Rimag = (float *) malloc(sizeof(float) * size);
+    checkError((h_Rimag != NULL), shrTRUE, "Could not allocate memory");
+}
+
+void
+allocateDeviceMemory(const unsigned size)
+{
+    d_Freal = createDeviceBuffer(
+                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                        sizeof(float) * size,
+                        h_Freal,
+                        true);
+
+    d_Fimag = createDeviceBuffer(
+                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                        sizeof(float) * size,
+                        h_Fimag,
+                        true);
+
+    d_Rreal = createDeviceBuffer(CL_MEM_WRITE_ONLY,
+                                              sizeof(float) * size,
+                                              h_Rreal,
+                                              true);
+
+    d_Rimag = createDeviceBuffer(CL_MEM_WRITE_ONLY,
+                                              sizeof(float) * size,
+                                              h_Rimag,
+                                              true);
+}
+
+void 
+cleanup()
+{
+    // clean up device
+    clReleaseMemObject(d_Freal);
+    clReleaseMemObject(d_Fimag);
+    clReleaseMemObject(d_Rreal);
+    clReleaseMemObject(d_Rimag);
+
+    // cleanup ocl routines
+    clReleaseEvent(event);
+    clReleaseKernel(kernel);
+    clReleaseCommandQueue(commandQueue);
+    clReleaseProgram(cpProgram);
+    clReleaseContext(cxContext);
+
+    // Release mem and event objects 
+    free(h_Freal);
+    h_Freal = 0;
+    free(h_Fimag);
+    h_Fimag = 0;
+    free(h_Rreal);
+    h_Rreal = 0;
+    free(h_Rimag);
+    h_Rimag = 0;
+}
 
 void
 checkError(const cl_int ciErrNum, const cl_int ref, const char* const operation) 
 {
     if (ciErrNum != ref) {
-        shrLog(LOGCONSOLE, ciErrNum, "ERROR:: %s Failed\n\n", operation);
+        printf("ERROR:: %d %s failed\n\n", ciErrNum, operation); 
+        cleanup();
         // TODO:: cleanup the memories
         //        may be print the type of error
         exit(EXIT_FAILURE);
@@ -59,9 +164,14 @@ createCommandQueue(const unsigned deviceId)
 				        0,
 				        &ciErrNum);
     checkError(ciErrNum, CL_SUCCESS, "clCreateCommandQueue"); 
+    ciErrNum = clSetCommandQueueProperty(commandQueue, 
+                                         CL_QUEUE_PROFILING_ENABLE, 
+                                         CL_TRUE, NULL);
+   
+    checkError(ciErrNum, CL_SUCCESS, "clSetCommandQueueProperty");   
 }				      
 
-cl_program
+void
 compileProgram(const char* const argv[] , const char* const header_file, 
                const char* const kernel_file,const unsigned deviceid)
 {
@@ -78,8 +188,7 @@ compileProgram(const char* const argv[] , const char* const header_file,
     checkError((source != NULL), shrTRUE, "oclLoadProgSource on source");
 
     cl_int ciErrNum;
-    const cl_program cpProgram = clCreateProgramWithSource(
-                                           cxContext, 1,
+    cpProgram = clCreateProgramWithSource( cxContext, 1,
 		 			   (const char **) &source,
 					   &program_length,
 					   &ciErrNum);
@@ -101,7 +210,6 @@ compileProgram(const char* const argv[] , const char* const header_file,
         oclLogBuildInfo(cpProgram, oclGetFirstDev(cxContext));
         checkError(ciErrNum, CL_SUCCESS, "clBuildProgram");
     }
-    return cpProgram;
 }
 
 void 
@@ -137,15 +245,12 @@ printCompilationErrors(const cl_program& cpProgram, const unsigned deviceId)
 }
 
 
-cl_kernel 
-createKernel(const cl_program& cpProgram, 
-	     const char* const kernelName)
+void
+createKernel(const char* const kernelName)
 {
-
     cl_int ciErrNum = CL_SUCCESS;
-    const cl_kernel kernobj = clCreateKernel(cpProgram, kernelName, &ciErrNum);
+    kernel = clCreateKernel(cpProgram, kernelName, &ciErrNum);
     checkError(ciErrNum, CL_SUCCESS, "clCreateKernel");
-    return kernobj;
 }
 
 
@@ -153,6 +258,8 @@ cl_mem
 createDeviceBuffer(const cl_mem_flags flags, 
                    const size_t size, void* const hostPtr,
 	           const bool copyToDevice)
+
+
 {
     cl_int ciErrNum = CL_SUCCESS;
     const cl_mem d_mem = clCreateBuffer(cxContext,
@@ -179,11 +286,12 @@ runKernel(const cl_kernel kernobj, const cl_uint workDim,
           const size_t localWorkSize[], const size_t globalWorkSize[])
 {
 
+    event = NULL;
     const cl_int ciErrNum = clEnqueueNDRangeKernel(commandQueue, kernobj, 
                                                    workDim, NULL, 
                                 	           globalWorkSize, 
                                                    localWorkSize, 0, 
-                                                   NULL, NULL);
+                                                   NULL, &event);
     checkError(ciErrNum, CL_SUCCESS, "clEnqueueNDRangeKernel");
 }
 
@@ -196,6 +304,7 @@ copyFromDevice(const cl_mem dMem, const size_t size,
   		                                hMem, 0, NULL, &GPUDone);
     checkError(ciErrNum, CL_SUCCESS, "clEnqueueReadBuffer"); 
 
+    //TODO:: we dont need to wait before copying real and imag
     ciErrNum = clWaitForEvents(deviceCount, &GPUDone);
     checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
 }
