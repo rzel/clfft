@@ -8,12 +8,10 @@ int
 main(const int argc, const char* argv[])
 {
     
-
-    if(argc < 2)
-      {
-	printf("Usage: clfft N [i]\n");
+    if (argc < 2) {
+        printf("Usage: clfft N [i]\n");
 	return 0;
-      }
+    }
 
     const unsigned n = atoi(argv[1]);
     int is = -1;
@@ -22,30 +20,7 @@ main(const int argc, const char* argv[])
     }
 
     // Allocate host memory. 
-    // h_Freal and h_Fimag represent the input signal to be transformed.
-    // h_Rreal and h_Rimag represent the transformed output.
-
-    float* const h_Freal = (float *) malloc(sizeof(float) * ARR_SIZE);
-    if (h_Freal == NULL) {
-        printf("Error Could not allocate memory!\n");
-        return -1;
-    }
-    float* const h_Fimag = (float *) malloc(sizeof(float) * ARR_SIZE);
-    if (h_Fimag == NULL) {
-        printf("Error could not allocate memory!\n");
-        return -1;
-    }
-    float* const h_Rreal = (float *) malloc(sizeof(float) * ARR_SIZE);
-    if (h_Rreal == NULL) {
-        printf("Error could not allocate memory!\n");
-        return -1;
-    }
-    float* const h_Rimag = (float *) malloc(sizeof(float) * ARR_SIZE);
-    if (h_Rimag == NULL) {
-        printf("Error could not allocate memory!\n");
-        return -1;
-    }
-    
+    allocateHostMemory(ARR_SIZE);
 
     printf("Initializing Arrays.. \n");
     for (unsigned i = 0 ; i < ARR_SIZE; ++i) {
@@ -61,17 +36,20 @@ main(const int argc, const char* argv[])
     printf("Getting Device Count..\n");
     const cl_uint ciDeviceCount =  getDeviceCount();
 
+
     if (!ciDeviceCount) {
         printf("No opencl specific devices!\n");
-        return -1;
+        return 0;
     }
 
     printf("Creating Command Queue...\n");
-    // create a commiand queuw on device 1
-    createCommandQueue(1);
-
-    cooleyTukey(argv, h_Freal, h_Fimag, h_Rreal, h_Rimag, n);  
-    //slowFFT(argv, h_Freal,  h_Fimag, h_Rreal, h_Rimag, n, is);
+    // create a command queuw on device 1
+    createCommandQueue(1/*deviceID*/ );
+    cooleyTukey(argv, n, ARR_SIZE);  
+    //slowFFT(argv, n, is, ARR_SIZE);
+ 
+    printf("Kernel execution time on GPU: %.9f s\n", executionTime());
+    cleanup();
     return 1;
 }
 
