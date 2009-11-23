@@ -7,9 +7,18 @@
 cl_context cxContext = NULL;
 cl_command_queue commandQueue;
 
+void
+checkError(const cl_int ciErrNum, const cl_int ref, const char* const operation) 
+{
+    if (ciErrNum != ref) {
+        shrLog(LOGCONSOLE, ciErrNum, "ERROR:: %s Failed\n\n", operation);
+        // TODO:: cleanup the memories
+        //        may be print the type of error
+        exit(EXIT_FAILURE);
+    }    
+}
 
-
-cl_int 
+void
 init_cl_context(const cl_device_type device_type)
 {
     cl_int ciErrNum = CL_SUCCESS; 
@@ -21,16 +30,11 @@ init_cl_context(const cl_device_type device_type)
 				        &ciErrNum);
 
     fprintf(stdout,"After createContext ..\n");
-
-    if(ciErrNum != CL_SUCCESS) {
-        fprintf(stderr,"Error: Context Creation Failed:%d!\n", ciErrNum);
-    }
-
-    return ciErrNum;
+    checkError(ciErrNum, CL_SUCCESS, "clCreateContextFromType");
 }
 
-cl_int 
-getDeviceCount(cl_uint& ciDeviceCount)
+cl_uint 
+getDeviceCount()
 {
     size_t nDeviceBytes;
   
@@ -40,22 +44,12 @@ getDeviceCount(cl_uint& ciDeviceCount)
 			      NULL, /* void * param_value */
 			      &nDeviceBytes); /* size_t param_value_size_ret */
   
-    if (ciErrNum != CL_SUCCESS) {
-        fprintf(stderr,"Error in GetDeviceInfo!\n");
-        return ciErrNum;
-    }
-
-    ciDeviceCount = (cl_uint)nDeviceBytes/sizeof(cl_device_id);
-
-    if (ciDeviceCount == 0) {
-        fprintf(stderr, "No Devices Supporting OpenCL!!\n");
-    }
-
-    return ciErrNum;
+    checkError(ciErrNum, CL_SUCCESS, "clGetContextInfo");
+    return ((cl_uint)nDeviceBytes/sizeof(cl_device_id));
 }
       
 
-cl_int 
+void
 createCommandQueue(const unsigned deviceId)
 {
     const cl_device_id device = oclGetDev(cxContext, deviceId);
@@ -64,53 +58,38 @@ createCommandQueue(const unsigned deviceId)
 				        device,
 				        0,
 				        &ciErrNum);
-
-    if (ciErrNum != CL_SUCCESS) {
-        fprintf(stderr, "Could not create CommandQueue !!\n");
-    }
-
-    return ciErrNum;
+    checkError(ciErrNum, CL_SUCCESS, "clCreateCommandQueue"); 
 }				      
 
-cl_int 
+cl_program
 compileProgram(const char* const argv[] , const char* const header_file, 
-               const char* const kernel_file,const unsigned deviceid,
-               cl_program& cpProgram) /* Program object stored in here. */
+               const char* const kernel_file,const unsigned deviceid)
 {
     const char* header_path = shrFindFilePath(header_file, argv[0]);
   
     size_t program_length;
     char* header = oclLoadProgSource(header_path, "" , &program_length);
 
-    if(header == NULL) {
-        fprintf(stderr,"Error: Failed to load the header %s!\n", header_path);
-        return -1000;
-    }
+    checkError((header != NULL), shrTRUE, "oclLoadProgSource on header");
 
     const char* source_path = shrFindFilePath(kernel_file, argv[0]);
     char* source = oclLoadProgSource(source_path, header, &program_length);
 
-    if (!source) {
-        fprintf(stderr, "Error: Failed to load source %s !\n", source);
-        return -2000;
-    }
+    checkError((source != NULL), shrTRUE, "oclLoadProgSource on source");
 
     cl_int ciErrNum;
-    cpProgram = clCreateProgramWithSource(cxContext, 1,
-					   (const char **) &source,
+    const cl_program cpProgram = clCreateProgramWithSource(
+                                           cxContext, 1,
+		 			   (const char **) &source,
 					   &program_length,
 					   &ciErrNum);
-    // do we need these frees?
+
     free(header);
     free(source);
-    if (ciErrNum != CL_SUCCESS) {
-        fprintf(stderr, "Error: Failed to create Program!\n");
-        return ciErrNum;
-    }
-      
+     
+    checkError(ciErrNum, CL_SUCCESS, "clCreateProgramWithSource"); 
     /* Build program */
 
-    cl_device_id devicelist[]= { oclGetDev(cxContext, deviceid)};
     ciErrNum = clBuildProgram(cpProgram,
         		      0, 	/* Number of devices for which we need to do this */
 			      NULL, /* Device List */
@@ -119,57 +98,54 @@ compileProgram(const char* const argv[] , const char* const header_file,
 			      NULL); /* User data to pass to ptrfn */
 
     if (ciErrNum != CL_SUCCESS) {
-        fprintf(stderr,"Error: Compilation Failure! \n");
-	switch(ciErrNum)
-	  {
-	  case CL_INVALID_DEVICE: fprintf(stderr,"Build Failure: INVALID_DEVICE.\n"); break;
-	  case CL_INVALID_VALUE: fprintf(stderr,"Build Failure: INVALID_VALUE.\n"); break;
-	  case CL_INVALID_PROGRAM: fprintf(stderr,"Build Failure: INVALID_PROGRAM.\n"); break;
-	  case CL_DEVICE_NOT_FOUND : fprintf(stderr,"Build Failure: Device not Found.\n"); break;
-	  default: fprintf(stderr,"Build Failure: %d.\n",ciErrNum); break;
-	  }
-
+        oclLogBuildInfo(cpProgram, oclGetFirstDev(cxContext));
+        checkError(ciErrNum, CL_SUCCESS, "clBuildProgram");
     }
-
-    return ciErrNum;
+    return cpProgram;
 }
 
-void printCompilationErrors(const cl_program& cpProgram, const unsigned deviceId)
+void 
+printCompilationErrors(const cl_program& cpProgram, const unsigned deviceId)
 {
-   size_t len;
-   char buffer[4096];
-   cl_int ciErrNum = CL_SUCCESS;
-   const cl_device_id device = oclGetDev(cxContext, deviceId);
-   
-   if((ciErrNum = clGetProgramBuildInfo(cpProgram, device, CL_PROGRAM_BUILD_LOG,
-					sizeof(buffer), buffer, &len)) != CL_SUCCESS)
-     {
-       switch(ciErrNum)
-	 {
-	 case CL_INVALID_DEVICE: fprintf(stderr,"Unable to get Build info: INVALID_DEVICE.\n"); break;
-	 case CL_INVALID_VALUE: fprintf(stderr,"Unable to get Build info: INVALID_VALUE.\n"); break;
-	 case CL_INVALID_PROGRAM: fprintf(stderr,"Unable to get Build info: INVALID_PROGRAM.\n"); break;
-	 default: fprintf(stderr,"Unable to get Build info.\n"); break;
-	 }
-     }
+    const cl_device_id device = oclGetDev(cxContext, deviceId);
 
-   fprintf(stderr,"Error %d:%s\n",ciErrNum, buffer);
+    size_t len;
+    char buffer[4096];
+    const cl_int ciErrNum = clGetProgramBuildInfo(cpProgram, device, 
+                                                  CL_PROGRAM_BUILD_LOG,
+                                                  sizeof(buffer), buffer, &len);    
+    
+    if (ciErrNum != CL_SUCCESS) {
+        switch(ciErrNum) {
+	    case CL_INVALID_DEVICE: 
+            fprintf(stderr,"Unable to get Build info: INVALID_DEVICE.\n"); 
+            break;
+	    case CL_INVALID_VALUE: 
+            fprintf(stderr,"Unable to get Build info: INVALID_VALUE.\n"); 
+            break;
+	    case CL_INVALID_PROGRAM: 
+            fprintf(stderr,"Unable to get Build info: INVALID_PROGRAM.\n"); 
+            break;
+	    default: 
+            fprintf(stderr,"Unable to get Build info.\n"); 
+            break;
+	 }
+    }
+
+    fprintf(stderr,"Error %d:%s\n",ciErrNum, buffer);
   
 }
 
 
-cl_int  
+cl_kernel 
 createKernel(const cl_program& cpProgram, 
-	     const char* const kernelName,
-	     cl_kernel& kernobj)
+	     const char* const kernelName)
 {
 
     cl_int ciErrNum = CL_SUCCESS;
-    kernobj = clCreateKernel(cpProgram, kernelName, &ciErrNum);
-    if (ciErrNum != CL_SUCCESS) {
-      fprintf(stderr, "Error: Failed to Create Kernel: %s %d!\n", kernelName, ciErrNum);
-    }
-    return ciErrNum;
+    const cl_kernel kernobj = clCreateKernel(cpProgram, kernelName, &ciErrNum);
+    checkError(ciErrNum, CL_SUCCESS, "clCreateKernel");
+    return kernobj;
 }
 
 
@@ -185,15 +161,12 @@ createDeviceBuffer(const cl_mem_flags flags,
 		                        hostPtr,
 		                        &ciErrNum);
   
-    if (ciErrNum != CL_SUCCESS) {
-        fprintf(stderr,"Couldnt create device buffer !!");
-        return NULL;
-    }
-
+    checkError(ciErrNum, CL_SUCCESS,  "clCreateBuffer");
     if (copyToDevice) {
-      fprintf(stderr,"Copyting to device memory.\n");
-      clEnqueueWriteBuffer(commandQueue, d_mem, CL_TRUE, 0, size,
-			   hostPtr, 0, NULL, NULL);
+        fprintf(stderr,"Copyting to device memory.\n");
+        ciErrNum = clEnqueueWriteBuffer(commandQueue, d_mem, CL_TRUE, 0, size,
+			                hostPtr, 0, NULL, NULL);
+        checkError(ciErrNum, CL_SUCCESS,  "clEnqueueWriteBuffer"); 
     }
 
     return d_mem;
@@ -201,7 +174,7 @@ createDeviceBuffer(const cl_mem_flags flags,
 
 
 
-cl_int 
+void 
 runKernel(const cl_kernel kernobj, const cl_uint workDim, 
           const size_t localWorkSize[], const size_t globalWorkSize[])
 {
@@ -211,38 +184,7 @@ runKernel(const cl_kernel kernobj, const cl_uint workDim,
                                 	           globalWorkSize, 
                                                    localWorkSize, 0, 
                                                    NULL, NULL);
-    fprintf(stderr,"After kernel..\n");
-
-    if (ciErrNum != CL_SUCCESS) {
-
-        fprintf(stderr,"Kernel Enqueue not a success !!\n");
-
-        switch(ciErrNum) {
-            case CL_INVALID_WORK_GROUP_SIZE: 
-            fprintf(stderr,"CL_INVALID_WORK_GROUP_SIZE\n"); 
-            break;
-	    case CL_INVALID_WORK_ITEM_SIZE: 
-            fprintf(stderr,"CL_INVALID_WORK_GROUP_SIZE\n"); 
-            break;
-	    case CL_INVALID_WORK_DIMENSION: 
-            fprintf(stderr,"CL_INVALID_WORK_DIMENSION\n"); 
-            break;  
-	    case CL_INVALID_KERNEL: 
-            fprintf(stderr,"CL_INVALID_KERNEL\n"); 
-            break;
-	    case CL_INVALID_KERNEL_ARGS: 
-            fprintf(stderr,"CL_INVALID_KERNEL_ARGS\n"); 
-            break;
-	    case CL_INVALID_VALUE: 
-            fprintf(stderr,"CL_INVALID_VALUE\n"); 
-            break;
-	    default: 
-            fprintf(stderr,"Unknown case %d \n",ciErrNum);
-        }
-      
-    }
-  
-    return ciErrNum;
+    checkError(ciErrNum, CL_SUCCESS, "clEnqueueNDRangeKernel");
 }
 
 void 
@@ -250,8 +192,10 @@ copyFromDevice(const cl_mem dMem, const size_t size,
                void* const hMem, const cl_int deviceCount)
 {
     cl_event GPUDone;
-    clEnqueueReadBuffer(commandQueue, dMem,CL_TRUE, 0, size,
-  		        hMem, 0, NULL, &GPUDone);
+    cl_int ciErrNum = clEnqueueReadBuffer(commandQueue, dMem,CL_TRUE, 0, size,
+  		                                hMem, 0, NULL, &GPUDone);
+    checkError(ciErrNum, CL_SUCCESS, "clEnqueueReadBuffer"); 
 
-    clWaitForEvents(deviceCount, &GPUDone);
+    ciErrNum = clWaitForEvents(deviceCount, &GPUDone);
+    checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
 }

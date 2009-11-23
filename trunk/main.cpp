@@ -56,14 +56,10 @@ main(const int argc, const char* argv[])
     }
 
     printf("Initializing CL Context..\n");
-    if (init_cl_context(CL_DEVICE_TYPE_GPU) !=CL_SUCCESS) {
-        printf("Error ! Aborting..\n");
-        exit(1);
-    }
+    init_cl_context(CL_DEVICE_TYPE_GPU);
 
     printf("Getting Device Count..\n");
-    cl_uint ciDeviceCount;
-    getDeviceCount(ciDeviceCount);
+    const cl_uint ciDeviceCount =  getDeviceCount();
 
     if (!ciDeviceCount) {
         printf("No opencl specific devices!\n");
