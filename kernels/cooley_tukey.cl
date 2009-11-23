@@ -1,3 +1,0 @@
-/*
-   Cooley tukey Implementation of FFT
-   */
