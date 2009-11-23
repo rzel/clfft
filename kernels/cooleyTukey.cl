@@ -28,7 +28,7 @@ reverse( __global float* f_real, __global float* f_imag,
     if (lPosition < powN) {
         lReverse =lReverse<<(powN-  lPosition);  
     }
-
+	// The Input vertex will be used as the Buffer vertex
     if (lReverse <  (addr % n)) {
         const unsigned to = lReverse + (addr / n) * n;
         float temp = f_real[addr];
@@ -40,6 +40,29 @@ reverse( __global float* f_real, __global float* f_imag,
         f_imag[to] = temp;
         
     }
+    barrier(CLK_LOCAL_MEM_FENCE);
+    // Now we have to iterate powN times Iteratively
+
+    if(addr%2)
+    {
+	    r_real[addr] = f_real[addr-1] - f_real[addr];
+	    r_imag[addr] = f_imag[addr-1] - f_imag[addr];
+    }
+    else
+    {
+	    r_real[addr] = f_real[addr+1] + f_real[addr];
+	    r_imag[addr] = f_imag[addr+1] + f_imag[addr];
+
+    }
+
+
+    int Iter =0;
+   
+/*    for(Iter;Iter<powN;Iter ++)
+    {
+
+    }
+*/
     
 }
 
