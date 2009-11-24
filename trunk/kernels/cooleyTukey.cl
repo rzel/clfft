@@ -28,41 +28,37 @@ reverse( __global float* f_real, __global float* f_imag,
     if (lPosition < powN) {
         lReverse =lReverse<<(powN-  lPosition);  
     }
-	// The Input vertex will be used as the Buffer vertex
-    if (lReverse <  (addr % n)) {
-        const unsigned to = lReverse + (addr / n) * n;
-        float temp = f_real[addr];
-        f_real[addr] = f_real[to];
-        f_real[to] = temp;
+    // The Input vertex will be used as the Buffer vertex
+    // We will keep on changing the input and output
+    // So tht we dont need to use another Buffer Array
+    const unsigned to = lReverse + (addr / n) * n;
+    r_real[to] = f_real[addr];
+    r_imag[to] = f_imag[addr];
 
-        temp = f_imag[addr];
-        f_imag[addr] = f_imag[to];
-        f_imag[to] = temp;
-        
-    }
     barrier(CLK_LOCAL_MEM_FENCE);
     // Now we have to iterate powN times Iteratively
 
     if(addr%2)
     {
-	    r_real[addr] = f_real[addr-1] - f_real[addr];
-	    r_imag[addr] = f_imag[addr-1] - f_imag[addr];
+	    f_real[addr] = r_real[addr-1] - r_real[addr];
+	    f_imag[addr] = r_imag[addr-1] - r_imag[addr];
     }
     else
     {
-	    r_real[addr] = f_real[addr+1] + f_real[addr];
-	    r_imag[addr] = f_imag[addr+1] + f_imag[addr];
+	    f_real[addr] = r_real[addr+1] + r_real[addr];
+	    f_imag[addr] = r_imag[addr+1] + r_imag[addr];
 
     }
 
 
-    int Iter =0;
+    int Iter =1;
    
-/*    for(Iter;Iter<powN;Iter ++)
+    for(Iter;Iter<powN;Iter ++)
     {
 
+
     }
-*/
+
     
 }
 
