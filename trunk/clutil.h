@@ -6,6 +6,7 @@
 #define __CLUTIL__
 
 #include <oclUtils.h>
+#define MAX_GPU_COUNT 2
 
 void checkError(const cl_int ciErrNum, const cl_int ref, const char* const operation);
 
@@ -17,24 +18,29 @@ cl_uint getDeviceCount();
 void createCommandQueue(const unsigned deviceId);
 
 void compileProgram(const char* const argv[] , const char* const header_file, 
-                    const char* const kernel_file, const unsigned deviceid);
+                                               const char* const kernel_file);
 
 
-void createKernel(const char* const kernelName);
+void createKernel(const unsigned device, const char* const kernelName);
 
 cl_mem createDeviceBuffer(const cl_mem_flags flags, const size_t size,
-                          void* const  hostPtr, const bool copytoDevice);
+                          void* const  hostPtr);
 
-void runKernel(const cl_kernel  kernobj, const cl_uint workDim, 
-               const size_t* localWorkSize, const  size_t* globalWorkSize);
+void runKernel(const unsigned device, const size_t* localWorkSize, 
+                                    const  size_t* globalWorkSize);
 
-void copyFromDevice(const cl_mem dMem, const size_t size, 
-                    void* hMem, const cl_int deviceCount);
+void copyToDevice(const unsigned device, const cl_mem mem,
+                  float* const hostPtr, const unsigned size);
 
-void printCompilationErrors(const cl_program& cpProgram, const unsigned deviceId);
-double executionTime();
+
+void copyFromDevice(const unsigned device, const cl_mem dMem,
+                    float* const hostPtr, const unsigned size);
+
+double executionTime(const unsigned device);
 void allocateHostMemory(const unsigned size);
-void allocateDeviceMemory(const unsigned size);
+void allocateDeviceMemory(const unsigned device, const unsigned size,
+                                           const unsigned copyOffset);
+
 void cleanup();
 
 extern float*  h_Freal;
@@ -42,15 +48,17 @@ extern float*  h_Fimag;
 extern float*  h_Rreal;
 extern float*  h_Rimag;
 
-extern cl_mem d_Freal;
-extern cl_mem d_Fimag;
-extern cl_mem d_Rreal;
-extern cl_mem d_Rimag;
+extern cl_mem d_Freal[MAX_GPU_COUNT];
+extern cl_mem d_Fimag[MAX_GPU_COUNT];
+extern cl_mem d_Rreal[MAX_GPU_COUNT];
+extern cl_mem d_Rimag[MAX_GPU_COUNT];
 
-
-extern cl_kernel kernel;
-extern cl_event event;
+extern cl_context cxContext;
 extern cl_program cpProgram;
-extern cl_command_queue commandQueue;
-extern cl_context cxContext ;
+extern cl_event gpuExecution[MAX_GPU_COUNT];
+extern cl_event gpuDone[MAX_GPU_COUNT];
+extern cl_kernel kernel[MAX_GPU_COUNT];
+extern cl_command_queue commandQueue[MAX_GPU_COUNT];
+
+extern unsigned deviceCount;
 #endif

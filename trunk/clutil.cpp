@@ -4,13 +4,14 @@
 */
 #include "clutil.h"
 
+unsigned deviceCount = 0;
 // global variables
 cl_context cxContext = 0;
-//TODO:: to be made an array of MAX_GPU
-cl_kernel kernel = 0;
-cl_command_queue commandQueue = 0;
-cl_event event = 0;
 cl_program cpProgram = 0;
+cl_kernel kernel[MAX_GPU_COUNT];
+cl_command_queue commandQueue[MAX_GPU_COUNT];
+cl_event gpuExecution[MAX_GPU_COUNT];
+cl_event gpuDone[MAX_GPU_COUNT];
 
 
 // host memory
@@ -24,19 +25,20 @@ float*  h_Rimag = 0;
 // device memory
 // d_Freal and d_Fimag represent the input signal to be transformed.
 // d_Rreal and d_Rimag represent the transformed output.
-cl_mem d_Freal = 0;
-cl_mem d_Fimag = 0;
-cl_mem d_Rreal = 0;
-cl_mem d_Rimag = 0;
+cl_mem d_Freal[MAX_GPU_COUNT];
+cl_mem d_Fimag[MAX_GPU_COUNT];
+cl_mem d_Rreal[MAX_GPU_COUNT];
+cl_mem d_Rimag[MAX_GPU_COUNT];
 
 double 
-executionTime()
+executionTime(const unsigned device)
 {
     cl_ulong start, end;
-    assert(event);
-    clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, 
+    clGetEventProfilingInfo(gpuExecution[device], 
+                            CL_PROFILING_COMMAND_END, 
                             sizeof(cl_ulong), &end, NULL);
-    clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, 
+    clGetEventProfilingInfo(gpuExecution[device],
+                            CL_PROFILING_COMMAND_START, 
                             sizeof(cl_ulong), &start, NULL);
 
     return (double)1.0e-9 * (end - start); // convert nanoseconds to seconds 
@@ -59,44 +61,49 @@ allocateHostMemory(const unsigned size)
 }
 
 void
-allocateDeviceMemory(const unsigned size)
+allocateDeviceMemory(const unsigned device, const unsigned size, 
+                                      const unsigned copyOffset)
 {
-    d_Freal = createDeviceBuffer(
+    d_Freal[device] = createDeviceBuffer(
                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                         sizeof(float) * size,
-                        h_Freal,
-                        true);
+                        h_Freal + copyOffset);
+    //copyToDevice(device, d_Freal[device],  h_Freal + copyOffset, size);
 
-    d_Fimag = createDeviceBuffer(
+    d_Fimag[device] = createDeviceBuffer(
                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                         sizeof(float) * size,
-                        h_Fimag,
-                        true);
+                        h_Fimag + copyOffset);
+   // copyToDevice(device, d_Fimag[device],  h_Fimag + copyOffset, size);
 
-    d_Rreal = createDeviceBuffer(CL_MEM_WRITE_ONLY,
+    d_Rreal[device] = createDeviceBuffer(CL_MEM_WRITE_ONLY,
                                               sizeof(float) * size,
-                                              h_Rreal,
-                                              true);
+                                              h_Rreal + copyOffset);
+    //copyToDevice(device, d_Rreal[device],  h_Rreal + copyOffset, size);
 
-    d_Rimag = createDeviceBuffer(CL_MEM_WRITE_ONLY,
+    d_Rimag[device] = createDeviceBuffer(CL_MEM_WRITE_ONLY,
                                               sizeof(float) * size,
-                                              h_Rimag,
-                                              true);
+                                              h_Rimag + copyOffset);
+    //copyToDevice(device, d_Rimag[device],  h_Rimag + copyOffset, size);
 }
 
 void 
 cleanup()
 {
-    // clean up device
-    clReleaseMemObject(d_Freal);
-    clReleaseMemObject(d_Fimag);
-    clReleaseMemObject(d_Rreal);
-    clReleaseMemObject(d_Rimag);
+    for (unsigned i = 0; i < deviceCount; ++i) { 
+        // clean up device
+        clReleaseMemObject(d_Freal[i]);
+        clReleaseMemObject(d_Fimag[i]);
+        clReleaseMemObject(d_Rreal[i]);
+        clReleaseMemObject(d_Rimag[i]);
 
-    // cleanup ocl routines
-    clReleaseEvent(event);
-    clReleaseKernel(kernel);
-    clReleaseCommandQueue(commandQueue);
+        // cleanup ocl routines
+        clReleaseEvent(gpuExecution[i]);
+        clReleaseEvent(gpuDone[i]);
+        clReleaseKernel(kernel[i]);
+        clReleaseCommandQueue(commandQueue[i]);
+    }
+
     clReleaseProgram(cpProgram);
     clReleaseContext(cxContext);
 
@@ -112,13 +119,13 @@ cleanup()
 }
 
 void
-checkError(const cl_int ciErrNum, const cl_int ref, const char* const operation) 
+checkError(const cl_int ciErrNum, const cl_int ref, 
+                      const char* const operation) 
 {
     if (ciErrNum != ref) {
         printf("ERROR:: %d %s failed\n\n", ciErrNum, operation); 
         cleanup();
-        // TODO:: cleanup the memories
-        //        may be print the type of error
+        // TODO::        may be print the type of error
         exit(EXIT_FAILURE);
     }    
 }
@@ -159,22 +166,23 @@ createCommandQueue(const unsigned deviceId)
 {
     const cl_device_id device = oclGetDev(cxContext, deviceId);
     cl_int ciErrNum = CL_SUCCESS;
-    commandQueue = clCreateCommandQueue(cxContext, 
-				        device,
-				        0,
-				        &ciErrNum);
+    commandQueue[deviceId]  = clCreateCommandQueue(cxContext, 
+			               	           device,
+				                   0,
+				                   &ciErrNum);
     checkError(ciErrNum, CL_SUCCESS, "clCreateCommandQueue"); 
-    ciErrNum = clSetCommandQueueProperty(commandQueue, 
+    ciErrNum = clSetCommandQueueProperty(commandQueue[deviceId], 
                                          CL_QUEUE_PROFILING_ENABLE, 
                                          CL_TRUE, NULL);
-   
     checkError(ciErrNum, CL_SUCCESS, "clSetCommandQueueProperty");   
 }				      
 
 void
 compileProgram(const char* const argv[] , const char* const header_file, 
-               const char* const kernel_file,const unsigned deviceid)
+               const char* const kernel_file)
 {
+
+    // Load the OpenCL source code from the .cl file 
     const char* header_path = shrFindFilePath(header_file, argv[0]);
   
     size_t program_length;
@@ -188,6 +196,7 @@ compileProgram(const char* const argv[] , const char* const header_file,
     checkError((source != NULL), shrTRUE, "oclLoadProgSource on source");
 
     cl_int ciErrNum;
+    // Create the program for all GPUs in the context
     cpProgram = clCreateProgramWithSource( cxContext, 1,
 		 			   (const char **) &source,
 					   &program_length,
@@ -212,52 +221,19 @@ compileProgram(const char* const argv[] , const char* const header_file,
     }
 }
 
-void 
-printCompilationErrors(const cl_program& cpProgram, const unsigned deviceId)
-{
-    const cl_device_id device = oclGetDev(cxContext, deviceId);
-
-    size_t len;
-    char buffer[4096];
-    const cl_int ciErrNum = clGetProgramBuildInfo(cpProgram, device, 
-                                                  CL_PROGRAM_BUILD_LOG,
-                                                  sizeof(buffer), buffer, &len);    
-    
-    if (ciErrNum != CL_SUCCESS) {
-        switch(ciErrNum) {
-	    case CL_INVALID_DEVICE: 
-            fprintf(stderr,"Unable to get Build info: INVALID_DEVICE.\n"); 
-            break;
-	    case CL_INVALID_VALUE: 
-            fprintf(stderr,"Unable to get Build info: INVALID_VALUE.\n"); 
-            break;
-	    case CL_INVALID_PROGRAM: 
-            fprintf(stderr,"Unable to get Build info: INVALID_PROGRAM.\n"); 
-            break;
-	    default: 
-            fprintf(stderr,"Unable to get Build info.\n"); 
-            break;
-	 }
-    }
-
-    fprintf(stderr,"Error %d:%s\n",ciErrNum, buffer);
-  
-}
-
-
 void
-createKernel(const char* const kernelName)
+createKernel(const unsigned device, const char* const kernelName)
 {
     cl_int ciErrNum = CL_SUCCESS;
-    kernel = clCreateKernel(cpProgram, kernelName, &ciErrNum);
+    kernel[device] = clCreateKernel(cpProgram, kernelName, &ciErrNum);
     checkError(ciErrNum, CL_SUCCESS, "clCreateKernel");
 }
 
 
 cl_mem 
 createDeviceBuffer(const cl_mem_flags flags, 
-                   const size_t size, void* const hostPtr,
-	           const bool copyToDevice)
+                   const size_t size, void* const hostPtr)
+	           
 
 
 {
@@ -269,42 +245,46 @@ createDeviceBuffer(const cl_mem_flags flags,
 		                        &ciErrNum);
   
     checkError(ciErrNum, CL_SUCCESS,  "clCreateBuffer");
-    if (copyToDevice) {
-        fprintf(stderr,"Copyting to device memory.\n");
-        ciErrNum = clEnqueueWriteBuffer(commandQueue, d_mem, CL_TRUE, 0, size,
-			                hostPtr, 0, NULL, NULL);
-        checkError(ciErrNum, CL_SUCCESS,  "clEnqueueWriteBuffer"); 
-    }
-
     return d_mem;
 }
 
+void 
+copyToDevice(const unsigned device, const cl_mem mem, 
+             float* const hostPtr, const unsigned size)
+{
+    fprintf(stderr,"Copyting to device memory.\n");
+    const cl_int ciErrNum = clEnqueueWriteBuffer(commandQueue[device], 
+                                                mem, CL_TRUE, 0, 
+                                                sizeof(float) * size, hostPtr, 
+                                                0, NULL, NULL);
+    checkError(ciErrNum, CL_SUCCESS,  "clEnqueueWriteBuffer");
+}
+
+void
+copyFromDevice(const unsigned device, const cl_mem dMem,
+               float* const hostPtr, const unsigned size)
+{
+    cl_int ciErrNum = clEnqueueReadBuffer(commandQueue[device], dMem,
+                                          CL_FALSE, 0,
+                                          sizeof(float) * size,
+                                          hostPtr, 0, NULL, 
+                                          &gpuDone[device]);
+    checkError(ciErrNum, CL_SUCCESS, "clEnqueueReadBuffer"); 
+}
 
 
 void 
-runKernel(const cl_kernel kernobj, const cl_uint workDim, 
-          const size_t localWorkSize[], const size_t globalWorkSize[])
+runKernel(const unsigned device, const size_t localWorkSize[], 
+                                 const size_t globalWorkSize[])
 {
 
-    event = NULL;
-    const cl_int ciErrNum = clEnqueueNDRangeKernel(commandQueue, kernobj, 
-                                                   workDim, NULL, 
+    const cl_int ciErrNum = clEnqueueNDRangeKernel(commandQueue[device], 
+                                                   kernel[device], 
+                                                   1, NULL, 
                                 	           globalWorkSize, 
                                                    localWorkSize, 0, 
-                                                   NULL, &event);
+                                                   NULL, 
+                                                   &gpuExecution[device]);
     checkError(ciErrNum, CL_SUCCESS, "clEnqueueNDRangeKernel");
 }
 
-void 
-copyFromDevice(const cl_mem dMem, const size_t size, 
-               void* const hMem, const cl_int deviceCount)
-{
-    cl_event GPUDone;
-    cl_int ciErrNum = clEnqueueReadBuffer(commandQueue, dMem,CL_TRUE, 0, size,
-  		                                hMem, 0, NULL, &GPUDone);
-    checkError(ciErrNum, CL_SUCCESS, "clEnqueueReadBuffer"); 
-
-    //TODO:: we dont need to wait before copying real and imag
-    ciErrNum = clWaitForEvents(deviceCount, &GPUDone);
-    checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
-}

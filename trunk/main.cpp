@@ -31,6 +31,7 @@ main(const int argc, const char* argv[])
     }
 
     printf("Initializing CL Context..\n");
+    // create the OpenCL context on available GPU devices
     init_cl_context(CL_DEVICE_TYPE_GPU);
 
     printf("Getting Device Count..\n");
@@ -41,14 +42,17 @@ main(const int argc, const char* argv[])
         printf("No opencl specific devices!\n");
         return 0;
     }
-
+    deviceCount = 1;
     printf("Creating Command Queue...\n");
     // create a command queuw on device 1
-    createCommandQueue(1/*deviceID*/ );
+    for (unsigned i = 0; i < deviceCount; ++i) {
+        createCommandQueue(i);
+    }
     cooleyTukey(argv, n, ARR_SIZE);  
     //slowFFT(argv, n, is, ARR_SIZE);
- 
-    printf("Kernel execution time on GPU: %.9f s\n", executionTime());
+    for (unsigned i = 0; i < deviceCount; ++i) {
+        printf("Kernel execution time on GPU %d: %.9f s\n", i, executionTime(i));
+    }
     cleanup();
     return 1;
 }
