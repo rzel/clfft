@@ -49,14 +49,18 @@ reverse( __global float* f_real, __global float* f_imag,
 	    f_imag[addr] = r_imag[addr+1] + r_imag[addr];
 
     }
-
-
+    int nIter =2;
     int Iter =1;
+    __global float* lBufreal = f_real;
+    __global float* lBufimag = f_imag;
+    __global float* lResultreal = r_real;
+    __global float* lResultimag = r_imag;
+
    
     for(Iter;Iter<powN;Iter ++)
     {
-
-
+	nIter*=2;
+	barrier(CLK_LOCAL_MEM_FENCE);
     }
 
     
