@@ -1,34 +1,64 @@
 #include "clutil.h"
 #include "fft.h"
 
+static unsigned workOffset[MAX_GPU_COUNT];
+static unsigned workSize[MAX_GPU_COUNT];
+
 
 int
-slowFFT( const char* const argv[], const unsigned n, const int is,
-                                               const unsigned size)
+slowFFT(const char* const argv[], const unsigned n, const int is,
+                                             const unsigned size)
 
 {
 
-    allocateDeviceMemory(size);
     printf("Compiling Program..\n");
-    compileProgram(argv, "fft.h", "kernels/slowfft.cl", 1);
-    createKernel("slowfft");
+    compileProgram(argv, "fft.h", "kernels/slowfft.cl");
 
-    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*) &d_Freal);
-    clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*) &d_Fimag);
-    clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*) &d_Rreal);
-    clSetKernelArg(kernel, 3, sizeof(cl_mem), (void*) &d_Rimag);
-    clSetKernelArg(kernel, 4, sizeof(unsigned), &n);
-    clSetKernelArg(kernel, 5, sizeof(int), &is);
+    printf("Creating Kernel\n");
+    for (unsigned i = 0; i < deviceCount; ++i) {
+        createKernel(i, "slowfft");
+    }
+
+
+    const unsigned sizePerGPU = size / deviceCount;
+    for (unsigned i = 0; i < deviceCount; ++i) {
+        workSize[i] = (i != (deviceCount - 1)) ? sizePerGPU 
+                                               : (size - workOffset[i]);       
+        
+        printf("Allocating device memory for device %d\n", i);
+        allocateDeviceMemory(i , workSize[i], workOffset[i]);
+        
+        clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void*) &d_Freal[i]);
+        clSetKernelArg(kernel[i], 1, sizeof(cl_mem), (void*) &d_Fimag[i]);
+        clSetKernelArg(kernel[i], 2, sizeof(cl_mem), (void*) &d_Rreal[i]);
+        clSetKernelArg(kernel[i], 3, sizeof(cl_mem), (void*) &d_Rimag[i]);
+        clSetKernelArg(kernel[i], 4, sizeof(unsigned), &n);
+        clSetKernelArg(kernel[i], 5, sizeof(int), &is);
+        if ((i + 1) < deviceCount) {
+            workOffset[i + 1] = workOffset[i] + workSize[i];
+        } 
+
+    }
     
-
     size_t localWorkSize[] = {BLOCK_SIZE};
-    size_t globalWorkSize[]= {shrRoundUp(BLOCK_SIZE, ARR_SIZE + BLOCK_SIZE -1)};
-    runKernel(kernel, 1, /* Work Dimension. */
-              localWorkSize,
-              globalWorkSize);
+    //size_t globalWorkSize[]= {shrRoundUp(BLOCK_SIZE, ARR_SIZE + BLOCK_SIZE -1)};
 
-    copyFromDevice(d_Rreal, sizeof(float) * ARR_SIZE, h_Rreal, true);
-    copyFromDevice(d_Rimag, sizeof(float) * ARR_SIZE, h_Rimag, true);
+    for (unsigned i = 0; i < deviceCount; ++i) {
+        size_t globalWorkSize[] = {shrRoundUp(BLOCK_SIZE, workSize[i])}; 
+        // kernel non blocking execution 
+        runKernel(i, localWorkSize, globalWorkSize);
+    }
+
+    for (unsigned i = 0; i < deviceCount; ++i) {
+        copyFromDevice(i, d_Rreal[i], h_Rreal + workOffset[i],
+                                                workSize[i]); 
+        copyFromDevice(i, d_Rimag[i], h_Rimag + workOffset[i],
+                                                 workSize[i]);
+    }
+
+    // wait for copy event
+    const cl_int ciErrNum = clWaitForEvents(deviceCount, gpuDone);
+    checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
 
     printf("Results : \n");
     for (unsigned i = 0; i < ARR_SIZE; ++i) {
