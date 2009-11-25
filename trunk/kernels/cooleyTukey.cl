@@ -9,6 +9,8 @@ reverse( __global float* f_real, __global float* f_imag,
          unsigned  n, unsigned powN)
 
 {
+
+    const float TWOPI = 2*3.14159265359;
     const size_t bx = get_group_id(0);
     const size_t tx = get_local_id(0);
     const unsigned  addr = bx * BLOCK_SIZE + tx; 
@@ -18,7 +20,6 @@ reverse( __global float* f_real, __global float* f_imag,
     unsigned int lIndex =  addr % n;
     unsigned int lPosition  = 0;
     unsigned int lReverse= 0;
-    unsigned int lTemp = 0;
     while(lIndex) {
         lReverse = lReverse << 1;
         lReverse += lIndex %2;
@@ -55,14 +56,18 @@ reverse( __global float* f_real, __global float* f_imag,
     __global float* lBufimag = f_imag;
     __global float* lResultreal = r_real;
     __global float* lResultimag = r_imag;
-
-   
+    __global float* lTemp =0;
+    lIndex =  addr % n;
     for(Iter;Iter<powN;Iter ++)
     {
 	nIter*=2;
 	barrier(CLK_LOCAL_MEM_FENCE);
+	lTemp= lBufreal ;
+	lBufreal = lResultreal;
+	lResultreal = lTemp;
+	lTemp= lBufimag;
+	lBufimag = lResultimag ;
+	lResultimag = lTemp;
     }
-
-    
 }
 
