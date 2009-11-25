@@ -48,7 +48,12 @@ cooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
          copyFromDevice(i, d_Rreal[i], h_Rreal + workOffset[i],
                                                  workSize[i]);
          copyFromDevice(i, d_Rimag[i], h_Rimag + workOffset[i],
-                                                 workSize[i]);
+			 workSize[i]);
+	 copyFromDevice(i, d_Fimag[i], h_Fimag + workOffset[i],
+			 workSize[i]);
+	 copyFromDevice(i, d_Freal[i], h_Freal + workOffset[i],
+			 workSize[i]);
+
     }
    
     // wait for copy event
@@ -57,6 +62,11 @@ cooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
 
     for (unsigned i = 0; i < ARR_SIZE; ++i) {
         printf("%f + i%f \n", h_Rreal[i], h_Rimag[i]);
+    }
+
+    printf("The Second array\n");
+    for (unsigned i = 0; i < ARR_SIZE; ++i) {
+	    printf("%f + i%f \n", h_Freal[i], h_Fimag[i]);
     }
 
     return 1;
