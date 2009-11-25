@@ -61,6 +61,27 @@ reverse( __global float* f_real, __global float* f_imag,
     for(Iter;Iter<powN;Iter ++)
     {
 	nIter*=2;
+	// to know which half it is
+	int lIndexMult = lIndex/(2*Iter) +(lIndex%Iter) + Iter + addr%n  ;
+	int k  = lIndex%Iter;
+
+	//Multiplying
+	float cs =  cos(TWOPI*k/Iter);
+	float sn =  sin(TWOPI*k/Iter);
+	float tmp_real= cs*lBufreal[lIndexMult] + sn * lBufimag[lIndexMult];
+	float tmp_imag = cs*lBufimag[lIndexMult] - sn * lBufreal[lIndexMult];
+	int lHalf = lIndex%(2*Iter)/Iter;
+	if(lHalf)
+	{
+		lResultreal[addr] = lBufreal[addr] + tmp_real;
+		lResultimag[addr] = lBufimag [addr] + tmp_imag;
+	}
+	else
+	{
+		lResultreal[addr] = lBufreal[addr] - tmp_real;
+		lResultimag[addr]  = lBufimag [addr] - tmp_imag;
+	}
+
 	barrier(CLK_LOCAL_MEM_FENCE);
 	lTemp= lBufreal ;
 	lBufreal = lResultreal;
