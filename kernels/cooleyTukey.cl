@@ -6,7 +6,7 @@
 	__kernel void
 reverse( __global float* f_real, __global float* f_imag,
 		__global float* r_real, __global float* r_imag,
-		unsigned  n, unsigned powN,__global float* lIteration)
+		unsigned  n, unsigned powN)
 
 {
 
@@ -91,7 +91,6 @@ reverse( __global float* f_real, __global float* f_imag,
 		lResultimag = lTemp;
 		nIter*=2;
 	}
-	*lIteration =nIter;
 
 }
 
