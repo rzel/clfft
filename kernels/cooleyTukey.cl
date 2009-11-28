@@ -39,7 +39,7 @@ reverse( __global float* f_real, __global float* f_imag,
 	barrier(CLK_LOCAL_MEM_FENCE);
 	// Now we have to iterate powN times Iteratively
 
-	if(addr%2)
+/*	if(addr%2)
 	{
 		f_real[addr] = r_real[addr-1] - r_real[addr];
 		f_imag[addr] = r_imag[addr-1] - r_imag[addr];
@@ -52,10 +52,9 @@ reverse( __global float* f_real, __global float* f_imag,
 	}
 	int nIter =2;
 	int Iter =1;
-	__global  float* lBufreal = f_real;
-	__global float* lBufimag = f_imag;
-	__global float* lResultreal = r_real;
-	__global float* lResultimag = r_imag;
+*/	
+	int nIter =1;
+	int Iter =0;
 	__global float* lTemp =0;
 	lIndex =  addr % n;
 	for(Iter;Iter<powN;Iter ++)
@@ -68,27 +67,27 @@ reverse( __global float* f_real, __global float* f_imag,
 		//Multiplying
 		float cs =  cos(TWOPI*k/(2*nIter));
 		float sn =  sin(TWOPI*k/(2*nIter));
-		float tmp_real= cs*lBufreal[lIndexMult] + sn * lBufimag[lIndexMult];
-		float tmp_imag = cs*lBufimag[lIndexMult] - sn * lBufreal[lIndexMult];
+		float tmp_real= cs*r_real[lIndexMult] + sn * r_imag[lIndexMult];
+		float tmp_imag = cs*r_imag[lIndexMult] - sn * r_real[lIndexMult];
 		int lHalf = (lIndex%(2*nIter))/nIter;
 		if(lHalf)
 		{
-			lResultreal[addr] = lBufreal[lIndexAdd] - tmp_real;
-			lResultimag[addr] = lBufimag[lIndexAdd] - tmp_imag;
+			f_real[addr] = r_real[lIndexAdd] - tmp_real;
+			f_imag[addr] = r_imag[lIndexAdd] - tmp_imag;
 		}
 		else
 		{
-			lResultreal[addr] = lBufreal[lIndexAdd] + tmp_real;
-			lResultimag[addr]  = lBufimag[lIndexAdd] + tmp_imag;
+			f_real[addr] = r_real[lIndexAdd] + tmp_real;
+			f_imag[addr] = r_imag[lIndexAdd] + tmp_imag;
 		}
 
 		barrier(CLK_LOCAL_MEM_FENCE);
-		lTemp= lBufreal ;
-		lBufreal = lResultreal;
-		lResultreal = lTemp;
-		lTemp= lBufimag;
-		lBufimag = lResultimag ;
-		lResultimag = lTemp;
+		lTemp= f_real;
+		f_real= r_real;
+		r_real= lTemp;
+		lTemp= f_imag;
+		f_imag= r_imag;
+		r_imag= lTemp;
 		nIter*=2;
 	}
 
