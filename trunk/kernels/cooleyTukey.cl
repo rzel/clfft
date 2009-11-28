@@ -39,20 +39,6 @@ reverse( __global float* f_real, __global float* f_imag,
 	barrier(CLK_LOCAL_MEM_FENCE);
 	// Now we have to iterate powN times Iteratively
 
-/*	if(addr%2)
-	{
-		f_real[addr] = r_real[addr-1] - r_real[addr];
-		f_imag[addr] = r_imag[addr-1] - r_imag[addr];
-	}
-	else
-	{
-		f_real[addr] = r_real[addr+1] + r_real[addr];
-		f_imag[addr] = r_imag[addr+1] + r_imag[addr];
-
-	}
-	int nIter =2;
-	int Iter =1;
-*/	
 	int nIter =1;
 	int Iter =0;
 	__global float* lTemp =0;
