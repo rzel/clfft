@@ -48,8 +48,12 @@ main(const int argc, const char* argv[])
     for (unsigned i = 0; i < deviceCount; ++i) {
         createCommandQueue(i);
     }
-    cooleyTukey(argv, n, ARR_SIZE);  
+
+    //cooleyTukey(argv, n, ARR_SIZE);  
     //slowFFT(argv, n, is, ARR_SIZE);
+
+    stockhamFFT(argv, n, is, ARR_SIZE);
+
     for (unsigned i = 0; i < deviceCount; ++i) {
         printf("Kernel execution time on GPU %d: %.9f s\n", i, executionTime(i));
     }
