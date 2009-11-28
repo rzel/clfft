@@ -26,8 +26,8 @@ main(const int argc, const char* argv[])
     for (unsigned i = 0 ; i < ARR_SIZE; ++i) {
         h_Freal[i] = i + 1;
         h_Fimag[i] = i + 1;
-        h_Rreal[i] = 0.0;
-	h_Rimag[i] = 0.0;
+        h_Rreal[i] = i + 1;
+	h_Rimag[i] = i + 1;
     }
 
     printf("Initializing CL Context..\n");

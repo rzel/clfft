@@ -68,23 +68,23 @@ allocateDeviceMemory(const unsigned device, const unsigned size,
                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                         sizeof(float) * size,
                         h_Freal + copyOffset);
-    //copyToDevice(device, d_Freal[device],  h_Freal + copyOffset, size);
+    copyToDevice(device, d_Freal[device],  h_Freal + copyOffset, size);
 
     d_Fimag[device] = createDeviceBuffer(
                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                         sizeof(float) * size,
                         h_Fimag + copyOffset);
-   // copyToDevice(device, d_Fimag[device],  h_Fimag + copyOffset, size);
+   copyToDevice(device, d_Fimag[device],  h_Fimag + copyOffset, size);
 
     d_Rreal[device] = createDeviceBuffer(CL_MEM_WRITE_ONLY,
                                               sizeof(float) * size,
                                               h_Rreal + copyOffset);
-    //copyToDevice(device, d_Rreal[device],  h_Rreal + copyOffset, size);
+    copyToDevice(device, d_Rreal[device],  h_Rreal + copyOffset, size);
 
     d_Rimag[device] = createDeviceBuffer(CL_MEM_WRITE_ONLY,
                                               sizeof(float) * size,
                                               h_Rimag + copyOffset);
-    //copyToDevice(device, d_Rimag[device],  h_Rimag + copyOffset, size);
+    copyToDevice(device, d_Rimag[device],  h_Rimag + copyOffset, size);
 }
 
 void 
