@@ -62,7 +62,7 @@ stockhamFFT(const char* const argv[], const unsigned n, const int is,
 
     printf("Results : \n");
     for (unsigned i = 0; i < ARR_SIZE; ++i) {
-        printf("%f + i%f \n", h_Rreal[i], h_Rimag[i]);
+      printf("%d %f + i%f \n",i, h_Rreal[i], h_Rimag[i]);
     }
     return 1;
 }
