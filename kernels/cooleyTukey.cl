@@ -30,6 +30,7 @@ reverse( __global float* f_real, __global float* f_imag,
 	if (lPosition < powN) {
 		lReverse =lReverse<<(powN-  lPosition);  
 	}
+
 	// The Input vertex will be used as the Buffer vertex
 	// We will keep on changing the input and output
 	// So tht we dont need to use another Buffer Array
@@ -40,43 +41,26 @@ reverse( __global float* f_real, __global float* f_imag,
 	barrier(CLK_LOCAL_MEM_FENCE);
 	// Now we have to iterate powN times Iteratively
 
-	int nIter =1;
-	int Iter =0;
-	__global float* lTemp =0;
-	lIndex =  addr % n;
-	for(Iter;Iter<powN;Iter ++)
+	int lThread = (addr/(n/2))*n + addr%(n/2);
+	//lIndex =  addr % n;
+	lIndex =  lThread %n;
+	int Iter,nIter;
+	for(Iter =0 ,nIter =1;Iter<(powN);Iter ++,nIter*=2)
 	{
-		// to know which half it is
-		int lIndexMult = (lIndex/(2*nIter))*2*nIter +(lIndex%nIter) + nIter + (addr/n)*n  ;
-		int lIndexAdd  =(lIndex/(2*nIter))*2*nIter + (lIndex%nIter)  + (addr/n)*n  ; 
+		int lIndexAdd  =  (lThread/n)*n + (lIndex/nIter)*2*nIter + lIndex%nIter ;
+		int lIndexMult =  lIndexAdd +nIter ;
 		int k  = lIndex%nIter;
-
-		//Multiplying
 		float cs =  cos(TWOPI*k/(2*nIter));
 		float sn =  sin(TWOPI*k/(2*nIter));
-		float tmp_real= cs*r_real[lIndexMult] + sn * r_imag[lIndexMult];
-		float tmp_imag = cs*r_imag[lIndexMult] - sn * r_real[lIndexMult];
-		int lHalf = (lIndex%(2*nIter))/nIter;
-		if(lHalf)
-		{
-			f_real[addr] = r_real[lIndexAdd] - tmp_real;
-			f_imag[addr] = r_imag[lIndexAdd] - tmp_imag;
-		}
-		else
-		{
-			f_real[addr] = r_real[lIndexAdd] + tmp_real;
-			f_imag[addr] = r_imag[lIndexAdd] + tmp_imag;
-		}
-
+		float add_real =  r_real[lIndexAdd];
+		float add_imag =  r_imag[lIndexAdd] ;
+		float tmp_real = cs*r_real[lIndexMult] + sn * r_imag[lIndexMult];
+		float tmp_imag = cs*r_imag[lIndexMult] - sn * r_real[lIndexMult]; 
+		r_real[lIndexAdd] = add_real + tmp_real;
+		r_imag[lIndexAdd] = add_imag + tmp_imag;
+		r_real[lIndexMult] = add_real - tmp_real;
+		r_imag[lIndexMult] = add_imag - tmp_imag;
 		barrier(CLK_LOCAL_MEM_FENCE);
-		lTemp= f_real;
-		f_real= r_real;
-		r_real= lTemp;
-		lTemp= f_imag;
-		f_imag= r_imag;
-		r_imag= lTemp;
-		nIter*=2;
 	}
-
 }
 
