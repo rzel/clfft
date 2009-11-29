@@ -90,6 +90,25 @@ printGpuTime()
 }
 
 void
+printCpuTime(struct rusage& start, struct rusage& end)
+{
+    const time_t startSec = start.ru_stime.tv_sec;
+    const suseconds_t startUsec = start.ru_stime.tv_usec;
+
+    const time_t endSec = end.ru_stime.tv_sec;
+    const suseconds_t endUsec = end.ru_stime.tv_usec;
+    
+    const time_t diffSec =  endSec - startSec;
+    const suseconds_t diffUsec =  endUsec - startUsec;
+     
+    cout << "CPU Time Taken " 
+         << diffSec << " seconds " 
+         << diffUsec << " micro seconds"
+         << endl;
+
+}
+
+void
 printResult(const unsigned size)
 {
      for (unsigned i = 0; i < size; ++i) {
@@ -167,19 +186,36 @@ cleanup()
 {
     for (unsigned i = 0; i < deviceCount; ++i) { 
         // clean up device
-        clReleaseMemObject(d_Freal[i]);
-        clReleaseMemObject(d_Fimag[i]);
-        clReleaseMemObject(d_Rreal[i]);
-        clReleaseMemObject(d_Rimag[i]);
-
+        if (d_Freal[i]) { 
+            clReleaseMemObject(d_Freal[i]);
+        }
+        if (d_Fimag[i]) { 
+            clReleaseMemObject(d_Fimag[i]);
+        }
+        if (d_Rreal[i]) {
+            clReleaseMemObject(d_Rreal[i]);
+        }
+        if (d_Rimag[i]) { 
+            clReleaseMemObject(d_Rimag[i]);
+        }
         // cleanup ocl routines
-        clReleaseEvent(gpuExecution[i]);
-        clReleaseEvent(gpuDone[i]);
-        clReleaseKernel(kernel[i]);
-        clReleaseCommandQueue(commandQueue[i]);
+        if (gpuExecution[i]) {  
+            clReleaseEvent(gpuExecution[i]);
+        }
+        if (gpuDone[i]) {
+            clReleaseEvent(gpuDone[i]);
+        }
+        if (kernel[i]) { 
+            clReleaseKernel(kernel[i]);
+        }
+        if (commandQueue[i]) {
+            clReleaseCommandQueue(commandQueue[i]);
+        }
     }
 
-    clReleaseProgram(cpProgram);
+    if (cpProgram) {
+        clReleaseProgram(cpProgram);
+    }
     if (cxContext) { 
         // segfaults if context is null.
         clReleaseContext(cxContext);

@@ -38,6 +38,8 @@ sande_tookeyFFT(const char* const argv[], const unsigned n,
 void
 slowFFTCpu(const unsigned start, const unsigned N, const unsigned size);
 
+void
+cooleyTukeyCpu(const unsigned offset, const unsigned int size, const unsigned N);
 
 
 #endif
