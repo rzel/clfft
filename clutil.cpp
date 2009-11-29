@@ -35,10 +35,10 @@ cl_mem d_Rreal[MAX_GPU_COUNT];
 cl_mem d_Rimag[MAX_GPU_COUNT];
 
 unsigned
-initExecution(const unsigned size)
+initExecution(const unsigned size, const unsigned samplesize)
 {
     // Allocate host memory
-    allocateHostMemory(size);
+  allocateHostMemory(size, samplesize);
     if (deviceCount) {
         cout << "Initializing device(s).." << endl;
         // create the OpenCL context on available GPU devices
@@ -131,7 +131,7 @@ executionTime(const unsigned device)
 }
 
 void
-allocateHostMemory(const unsigned size)
+allocateHostMemory(const unsigned size, const unsigned n)
 {
     h_Freal = (float *) malloc(sizeof(float) * size);
     checkError((h_Freal != NULL), shrTRUE, "Could not allocate memory");
@@ -146,8 +146,8 @@ allocateHostMemory(const unsigned size)
     checkError((h_Rimag != NULL), shrTRUE, "Could not allocate memory");
 
     for (unsigned i = 0 ; i < size; ++i) {
-        h_Freal[i] = i + 1;
-        h_Fimag[i] = i + 1;
+        h_Freal[i] = (i + 1)%n;
+        h_Fimag[i] = (i + 1)%n;
         h_Rreal[i] = 0;
         h_Rimag[i] = 0;
     }

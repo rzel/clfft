@@ -9,7 +9,7 @@ bool
 runStockhamFFT(const char* const argv[], const unsigned n,
                                          const unsigned size)
 {
-    if (!initExecution(size)) {
+  if (!initExecution(size, n)) {
          return false;
     }
     stockhamFFTGpu(argv, n, size);
@@ -60,9 +60,9 @@ stockhamFFTGpu(const char* const argv[], const unsigned n,
     }
 
     for (unsigned i = 0; i < deviceCount; ++i) {
-        copyFromDevice(i, d_Rreal[i], h_Rreal + workOffset[i],
+        copyFromDevice(i, d_Freal[i], h_Rreal + workOffset[i],
                                                 workSize[i]); 
-        copyFromDevice(i, d_Rimag[i], h_Rimag + workOffset[i],
+        copyFromDevice(i, d_Fimag[i], h_Rimag + workOffset[i],
                                                  workSize[i]);
     }
 

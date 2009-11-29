@@ -6,8 +6,9 @@
 #######################
 USE_CPU 0
 USE_GPU 2
-BLOCK_SIZE 16
-FFT_ALGO 1
+BLOCK_SIZE 256
+FFT_ALGO 3
 PRINT_RESULT 0
+
 
 

@@ -13,7 +13,7 @@ runSlowFFT(const char* const argv[], const unsigned n,
                                   const unsigned size)
 {
      //TODO:: split the work according to the availability  
-     if (!initExecution(size)) {
+  if (!initExecution(size,n)) {
          return false;
      }
      

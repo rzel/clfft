@@ -17,7 +17,7 @@
 #define STOCKHALM 3
 #define SANDE_TOOKEY 4
 
-unsigned initExecution(const unsigned size);
+unsigned initExecution(const unsigned size, const unsigned n);
 void partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU);
 
 void checkError(const cl_int ciErrNum, const cl_int ref, const char* const operation);
@@ -53,7 +53,7 @@ void copyFromDevice(const unsigned device, const cl_mem dMem,
                     float* const hostPtr, const unsigned size);
 
 double executionTime(const unsigned device);
-void allocateHostMemory(const unsigned size);
+void allocateHostMemory(const unsigned size, const unsigned samplesize);
 void allocateDeviceMemory(const unsigned device, const unsigned size,
                                            const unsigned copyOffset);
 
