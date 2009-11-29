@@ -1,12 +1,24 @@
 #include "clutil.h"
 #include "fft.h"
+#include "kernels.h"
 
 static unsigned workOffset[MAX_GPU_COUNT];
 static unsigned workSize[MAX_GPU_COUNT];
 
-int
-cooleyTukey(const char* const argv[], const unsigned n, const unsigned size) 
+bool 
+runCooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
 {
+     if (!initExecution(size)) {
+         return false;
+     }
+     cooleyTukeyGpu(argv, n, size);
+     return true;
+}
+
+void
+cooleyTukeyGpu(const char* const argv[], const unsigned n, const unsigned size) 
+{
+    if (size == 0) return;
     const unsigned powN = (unsigned)log2(n);
 
     printf("Compiling Cooley Tukey Program..\n");
@@ -52,23 +64,12 @@ cooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
 			 workSize[i]);
 	 copyFromDevice(i, d_Freal[i], h_Freal + workOffset[i],
 			 workSize[i]);
-
     }
 
 
     // wait for copy event
     const cl_int ciErrNum = clWaitForEvents(deviceCount, gpuDone);
     checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
-
-    for (unsigned i = 0; i < size; ++i) {
-        printf("%f + i%f \n", h_Rreal[i], h_Rimag[i]);
-    }
-
-    printf("The Second array\n");
-    for (unsigned i = 0; i < size; ++i) {
-	    printf("%f + i%f \n", h_Freal[i], h_Fimag[i]);
-    }
-
-    return 1;
+    printGpuTime();
 }
 

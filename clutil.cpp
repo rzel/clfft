@@ -3,7 +3,7 @@
  Functions to help with opencl management.
 */
 #include "clutil.h"
-
+using namespace std;
 // global variables
 cl_context cxContext = 0;
 cl_program cpProgram = 0;
@@ -17,7 +17,7 @@ unsigned useCpu = 0;
 unsigned deviceCount = 1;
 unsigned blockSize = 16;
 unsigned fftAlgo = 1;
-
+unsigned print = 0;
 // host memory
 // h_Freal and h_Fimag represent the input signal to be transformed.
 // h_Rreal and h_Rimag represent the transformed output.
@@ -34,6 +34,68 @@ cl_mem d_Fimag[MAX_GPU_COUNT];
 cl_mem d_Rreal[MAX_GPU_COUNT];
 cl_mem d_Rimag[MAX_GPU_COUNT];
 
+unsigned
+initExecution(const unsigned size)
+{
+    // Allocate host memory
+    allocateHostMemory(size);
+    if (deviceCount) {
+        cout << "Initializing device(s).." << endl;
+        // create the OpenCL context on available GPU devices
+        init_cl_context(CL_DEVICE_TYPE_GPU);
+
+        const cl_uint ciDeviceCount =  getDeviceCount();
+
+
+        if (!ciDeviceCount) {
+            printf("No opencl specific devices!\n");
+            return 0;
+        }
+
+        printf("Creating Command Queue...\n");
+        // create a command queue on device 1
+        for (unsigned i = 0; i < deviceCount; ++i) {
+            createCommandQueue(i);
+        }
+    }
+    return 1;
+}
+
+void 
+partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU)
+{
+    if (deviceCount == 0) {
+        sizeOnGPU = 0;
+        sizeOnCPU = size;
+        return;
+    }
+   
+    if (useCpu == 0) {
+       sizeOnGPU = size;
+       sizeOnCPU = 0;
+       return;
+    }    
+
+    sizeOnGPU = (size / 4) * 3;
+    sizeOnCPU = size - sizeOnGPU; 
+}
+
+void 
+printGpuTime()
+{
+    for (unsigned k = 0; k < deviceCount; ++k) {
+        cout << "Kernel execution time on GPU " << k
+             << " :  " << executionTime(k) << " seconds" << endl;
+    }
+}
+
+void
+printResult(const unsigned size)
+{
+     for (unsigned i = 0; i < size; ++i) {
+         printf("%f + i%f \n", h_Rreal[i], h_Rimag[i]);
+     }
+}
 
 double 
 executionTime(const unsigned device)
@@ -67,8 +129,8 @@ allocateHostMemory(const unsigned size)
     for (unsigned i = 0 ; i < size; ++i) {
         h_Freal[i] = i + 1;
         h_Fimag[i] = i + 1;
-        h_Rreal[i] = i + 1;
-        h_Rimag[i] = i + 1;
+        h_Rreal[i] = 0;
+        h_Rimag[i] = 0;
     }
 
 }
@@ -78,13 +140,13 @@ allocateDeviceMemory(const unsigned device, const unsigned size,
                                       const unsigned copyOffset)
 {
     d_Freal[device] = createDeviceBuffer(
-                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                        CL_MEM_READ_ONLY,
                         sizeof(float) * size,
                         h_Freal + copyOffset);
     copyToDevice(device, d_Freal[device],  h_Freal + copyOffset, size);
 
     d_Fimag[device] = createDeviceBuffer(
-                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                        CL_MEM_READ_ONLY,
                         sizeof(float) * size,
                         h_Fimag + copyOffset);
     copyToDevice(device, d_Fimag[device],  h_Fimag + copyOffset, size);
@@ -118,7 +180,10 @@ cleanup()
     }
 
     clReleaseProgram(cpProgram);
-    clReleaseContext(cxContext);
+    if (cxContext) { 
+        // segfaults if context is null.
+        clReleaseContext(cxContext);
+    }
 
     // Release mem and event objects 
     free(h_Freal);
@@ -207,13 +272,12 @@ compileProgram(const char* const argv[] , const char* const header_file,
 
     checkError((source != NULL), shrTRUE, "oclLoadProgSource on source");
 
-    cl_int ciErrNum;
+    cl_int ciErrNum; 
     // Create the program for all GPUs in the context
     cpProgram = clCreateProgramWithSource( cxContext, 1,
 		 			   (const char **) &source,
 					   &program_length,
 					   &ciErrNum);
-
     free(header);
     free(source);
      

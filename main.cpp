@@ -3,7 +3,6 @@
 #include "fft.h"
 #include "kernels.h"
 #include<fstream>
-#include<iostream>
 #include<string.h>
 using namespace std;
 
@@ -46,8 +45,10 @@ readConfig(const char* const fName)
                 return false;
             }
             fftAlgo = val;
-        }  else {
-            cout << "Invalid config" << endl;
+        }  else if (!strcmp(config, "PRINT_RESULT")) {
+            print = val;
+        }   else {
+            cout << "Invalid config " << config << endl;
             return false;
         } 
     }
@@ -86,44 +87,26 @@ main(const int argc, const char* argv[])
     cout << "USE_CPU " << useCpu << endl;
     cout << "USE_GPU " << deviceCount << endl;
     cout << "BLOCK_SIZE " << blockSize << endl;
-   
+    cout << "PRINT_RESULT " << print << endl;
 
-    //TODO:: move all these to cutils.cpp
-    // Allocate host memory. 
-    allocateHostMemory(inputSize);
-
-    
-    printf("Initializing CL Context..\n");
-    // create the OpenCL context on available GPU devices
-    init_cl_context(CL_DEVICE_TYPE_GPU);
-
-    printf("Getting Device Count..\n");
-    const cl_uint ciDeviceCount =  getDeviceCount();
-
-
-    if (!ciDeviceCount) {
-        printf("No opencl specific devices!\n");
+    bool result = true;
+    if (fftAlgo == SLOW_FFT) {
+        result = runSlowFFT(argv, sampleSize, inputSize);
+    } else if (fftAlgo == COOLEY_TUKEY) {
+        result = runCooleyTukey(argv, sampleSize, inputSize);
+    } else if (fftAlgo == STOCKHALM) {
+        result = runStockhamFFT(argv, sampleSize, inputSize);
+    } else {
+        cout << "Wrong FFT_ALGO config" << endl;
+        result = false;
+    }
+    if (!result) {
+        cleanup();
         return 0;
     }
 
-    printf("Creating Command Queue...\n");
-    // create a command queue on device 1
-    for (unsigned i = 0; i < deviceCount; ++i) {
-        createCommandQueue(i);
-    }
-
-    if (fftAlgo == SLOW_FFT) {
-        runSlowFFT(argv, sampleSize, inputSize);
-    } else if (fftAlgo == COOLEY_TUKEY) {
-        cooleyTukey(argv, sampleSize, inputSize);
-    } else if (fftAlgo == STOCKHALM) {
-        stockhamFFT(argv, sampleSize, inputSize);
-    } else {
-        cout << "Wrong FFT_ALGO config" << endl;
-    }
-
-    for (unsigned i = 0; i < deviceCount; ++i) {
-        printf("Kernel execution time on GPU %d: %.9f s\n", i, executionTime(i));
+    if (print) {
+        printResult(inputSize);
     }
     cleanup();
     return 1;

@@ -2,22 +2,32 @@
 #define KERNELS_H
 
 // Driver functions
-int
+bool
 runSlowFFT(const char* const argv[], const unsigned n,
                                              const unsigned size);
+
+bool
+runCooleyTukey(const char* const argv[], const unsigned n,
+                                         const unsigned size);
+
+
+bool
+runStockhamFFT(const char* const argv[], const unsigned n,
+
+                                         const unsigned size);
 
 
 
 // FOR GPU
-int
-cooleyTukey(const char* const argv[], const unsigned n, const unsigned size);
+void
+cooleyTukeyGpu(const char* const argv[], const unsigned n, const unsigned size);
 
-int
+void
 slowFFTGpu(const char* const argv[], const unsigned n,
                                              const unsigned size);
 
-int
-stockhamFFT(const char* const argv[], const unsigned n,
+void
+stockhamFFTGpu(const char* const argv[], const unsigned n,
                                          const unsigned size);
 
 // FOR CPU

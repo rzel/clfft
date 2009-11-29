@@ -1,12 +1,23 @@
 #include "clutil.h"
 #include "fft.h"
+#include"kernels.h"
 
 static unsigned workOffset[MAX_GPU_COUNT];
 static unsigned workSize[MAX_GPU_COUNT];
 
+bool
+runStockhamFFT(const char* const argv[], const unsigned n,
+                                         const unsigned size)
+{
+    if (!initExecution(size)) {
+         return false;
+    }
+    stockhamFFTGpu(argv, n, size);
+    return true;
+}
 
-int
-stockhamFFT(const char* const argv[], const unsigned n,
+void
+stockhamFFTGpu(const char* const argv[], const unsigned n,
                                              const unsigned size)
 
 {
@@ -58,10 +69,5 @@ stockhamFFT(const char* const argv[], const unsigned n,
     // wait for copy event
     const cl_int ciErrNum = clWaitForEvents(deviceCount, gpuDone);
     checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
-
-    printf("Results : \n");
-    for (unsigned i = 0; i < size; ++i) {
-      printf("%d %f + i%f \n",i, h_Rreal[i], h_Rimag[i]);
-    }
-    return 1;
+    printGpuTime();
 }
