@@ -30,9 +30,7 @@ readConfig(const char* const fName)
                 cout << "Invalid GPU COUNT" << endl;
                 return false;  
             }
-            if (val > 0) {
-                deviceCount = val;
-            } 
+            deviceCount = val;
 
         } else if (!strcmp(config, "BLOCK_SIZE")) {
             if (val == 0) {
@@ -51,6 +49,9 @@ readConfig(const char* const fName)
             cout << "Invalid config " << config << endl;
             return false;
         } 
+    }
+    if (deviceCount == 0 && useCpu == 0) {
+        cout << "CPU and GPU count are both 0" << endl;
     }
     return true;
 }
@@ -80,6 +81,7 @@ main(const int argc, const char* argv[])
               cout << "Error in config file abort" << endl;  
               return 0;
          }
+         
     } else {
          cout << "Config file not specified. Executing with default config" << endl;
     }

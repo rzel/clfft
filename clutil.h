@@ -7,6 +7,10 @@
 
 #include <oclUtils.h>
 #include<iostream>
+#include <sys/time.h>
+#include<sys/resource.h>
+#include <sys/types.h>
+
 #define MAX_GPU_COUNT 2
 #define SLOW_FFT 1
 #define COOLEY_TUKEY 2
@@ -19,6 +23,9 @@ void partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU);
 void checkError(const cl_int ciErrNum, const cl_int ref, const char* const operation);
 
 void printResult(const unsigned size);
+
+void
+printCpuTime(struct rusage& start, struct rusage& end);
 
 void init_cl_context(cl_device_type device_type);
 

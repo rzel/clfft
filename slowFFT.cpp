@@ -42,6 +42,7 @@ slowFFTGpu(const char* const argv[], const unsigned n,
 
 {
     if (size == 0) return;
+    if (deviceCount == 0) return;
     printf("Compiling slowFFT Program for GPU..\n");
     compileProgram(argv, "fft.h", "kernels/slowfft.cl");
 
@@ -95,8 +96,11 @@ void
 slowFFTCpu(const unsigned offset, const unsigned N, const unsigned  size)
 {
     if (size == 0) return;
+    if (useCpu == 0) return;
+    
     const float ph = ( -1 *2.0 * 3.14159265359) / N;
-    time_t start = time(NULL);
+    struct rusage start;
+    getrusage(RUSAGE_SELF, &start);
     cout << "Running on CPU.." << endl;
     #pragma omp parallel for
     for (unsigned i = 0; i <  size / N; ++i) {
@@ -118,7 +122,8 @@ slowFFTCpu(const unsigned offset, const unsigned N, const unsigned  size)
             h_Rimag[index] = imag;
         }
     }
-    time_t end = time(NULL);
-    cout << "Cpu Time " << end - start << endl;
+    struct rusage end;
+    getrusage(RUSAGE_SELF, &end);
+    printCpuTime(start, end);
 }
 
