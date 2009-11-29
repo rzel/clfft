@@ -7,6 +7,9 @@
 
 #include <oclUtils.h>
 #define MAX_GPU_COUNT 2
+#define SLOW_FFT 1
+#define COOLEY_TUKEY 2
+#define STOCKHALM 3
 
 void checkError(const cl_int ciErrNum, const cl_int ref, const char* const operation);
 
@@ -42,6 +45,11 @@ void allocateDeviceMemory(const unsigned device, const unsigned size,
                                            const unsigned copyOffset);
 
 void cleanup();
+
+extern unsigned useCpu;
+extern unsigned useGpu;
+extern unsigned blockSize;
+extern unsigned fftAlgo;
 
 extern float*  h_Freal;
 extern float*  h_Fimag;

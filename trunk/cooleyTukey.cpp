@@ -17,12 +17,10 @@ cooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
     }
     
     const unsigned sizePerGPU = size / deviceCount;
-    int Iter =0;
     for (unsigned i = 0; i < deviceCount; ++i) {
         workSize[i] = (i != (deviceCount - 1)) ? sizePerGPU
                                                : (size - workOffset[i]);
 
-        printf("Allocating device memory for device %d\n", i);
         allocateDeviceMemory(i , workSize[i], workOffset[i]);
         clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void*) &d_Freal[i]);
         clSetKernelArg(kernel[i], 1, sizeof(cl_mem), (void*) &d_Fimag[i]);
@@ -30,6 +28,7 @@ cooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
         clSetKernelArg(kernel[i], 3, sizeof(cl_mem), (void*) &d_Rimag[i]);
         clSetKernelArg(kernel[i], 4, sizeof(unsigned), &n); 
         clSetKernelArg(kernel[i], 5, sizeof(unsigned), &powN);
+        clSetKernelArg(kernel[i], 6, sizeof(unsigned), &blockSize);
 
         if ((i + 1) < deviceCount) {
             workOffset[i + 1] = workOffset[i] + workSize[i];
@@ -37,10 +36,10 @@ cooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
 
     }
 
-    size_t localWorkSize[] = {BLOCK_SIZE};
+    size_t localWorkSize[] = {blockSize};
    
     for (unsigned i = 0; i < deviceCount; ++i) { 
-        size_t globalWorkSize[] = {shrRoundUp(BLOCK_SIZE, workSize[i])};
+        size_t globalWorkSize[] = {shrRoundUp(blockSize, workSize[i])};
         runKernel(i, localWorkSize, globalWorkSize);
     }
 
@@ -57,17 +56,16 @@ cooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
     }
 
 
-   
     // wait for copy event
     const cl_int ciErrNum = clWaitForEvents(deviceCount, gpuDone);
     checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
 
-    for (unsigned i = 0; i < ARR_SIZE; ++i) {
+    for (unsigned i = 0; i < size; ++i) {
         printf("%f + i%f \n", h_Rreal[i], h_Rimag[i]);
     }
 
     printf("The Second array\n");
-    for (unsigned i = 0; i < ARR_SIZE; ++i) {
+    for (unsigned i = 0; i < size; ++i) {
 	    printf("%f + i%f \n", h_Freal[i], h_Fimag[i]);
     }
 

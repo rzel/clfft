@@ -15,7 +15,7 @@ CXXWARN_FLAGS := \
         -Wno-unused-function \
 	$(SPACE)
 
-CXXFLAGS  := $(CXXWARN_FLAGS)
+CXXFLAGS  := -fopenmp $(CXXWARN_FLAGS)
 INCLUDES  := -I/opt/opencl-sdk/shared/inc -I/opt/opencl-sdk/OpenCL/common/inc
 
 # Libs

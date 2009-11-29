@@ -6,12 +6,12 @@ static unsigned workSize[MAX_GPU_COUNT];
 
 
 int
-stockhamFFT(const char* const argv[], const unsigned n, const int is,
+stockhamFFT(const char* const argv[], const unsigned n,
                                              const unsigned size)
 
 {
     const unsigned powN = (unsigned)log2(n);
-    printf("Compiling Program..\n");
+    printf("Compiling stockhalm Program..\n");
     compileProgram(argv, "fft.h", "kernels/stockham.cl");
 
     printf("Creating Kernel\n");
@@ -19,20 +19,19 @@ stockhamFFT(const char* const argv[], const unsigned n, const int is,
         createKernel(i, "stockham");
     }
 
-
     const unsigned sizePerGPU = size / deviceCount;
     for (unsigned i = 0; i < deviceCount; ++i) {
         workSize[i] = (i != (deviceCount - 1)) ? sizePerGPU 
                                                : (size - workOffset[i]);       
         
-        printf("Allocating device memory for device %d\n", i);
         allocateDeviceMemory(i , workSize[i], workOffset[i]);
         
         clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void*) &d_Rreal[i]);
         clSetKernelArg(kernel[i], 1, sizeof(cl_mem), (void*) &d_Rimag[i]);
-	clSetKernelArg(kernel[i], 2, sizeof(int), &is);
-	clSetKernelArg(kernel[i], 3, sizeof(unsigned), &n);
-	clSetKernelArg(kernel[i], 5, sizeof(unsigned), &powN);
+	clSetKernelArg(kernel[i], 2, sizeof(unsigned), &n);
+	clSetKernelArg(kernel[i], 3, sizeof(unsigned), &powN);
+	clSetKernelArg(kernel[i], 4, sizeof(unsigned), &blockSize);
+       
 
         if ((i + 1) < deviceCount) {
             workOffset[i + 1] = workOffset[i] + workSize[i];
@@ -40,11 +39,11 @@ stockhamFFT(const char* const argv[], const unsigned n, const int is,
 
     }
     
-    size_t localWorkSize[] = {BLOCK_SIZE};
+    size_t localWorkSize[] = {blockSize};
     //size_t globalWorkSize[]= {shrRoundUp(BLOCK_SIZE, ARR_SIZE + BLOCK_SIZE -1)};
 
     for (unsigned i = 0; i < deviceCount; ++i) {
-        size_t globalWorkSize[] = {shrRoundUp(BLOCK_SIZE, workSize[i])}; 
+        size_t globalWorkSize[] = {shrRoundUp(blockSize, workSize[i])}; 
         // kernel non blocking execution 
         runKernel(i, localWorkSize, globalWorkSize);
     }
@@ -61,7 +60,7 @@ stockhamFFT(const char* const argv[], const unsigned n, const int is,
     checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
 
     printf("Results : \n");
-    for (unsigned i = 0; i < ARR_SIZE; ++i) {
+    for (unsigned i = 0; i < size; ++i) {
       printf("%d %f + i%f \n",i, h_Rreal[i], h_Rimag[i]);
     }
     return 1;

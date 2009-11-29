@@ -3,17 +3,18 @@
  */
 
 
-	__kernel void
+__kernel void
 reverse( __global float* f_real, __global float* f_imag,
 		__global float* r_real, __global float* r_imag,
-		unsigned  n, unsigned powN)
+		const unsigned  n, const unsigned powN,
+                const unsigned blockSize)
 
 {
 
 	const float TWOPI = 2*3.14159265359;
 	const size_t bx = get_group_id(0);
 	const size_t tx = get_local_id(0);
-	const unsigned  addr = bx * BLOCK_SIZE + tx; 
+	const unsigned  addr = bx * blockSize + tx; 
 	//   Swap position
 	unsigned int Target = 0;
 	//   Process all positions of input signal
