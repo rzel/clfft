@@ -12,8 +12,10 @@ stockham(  __global float * r_real, __global float * r_imag,
 
   const size_t bx = get_group_id(0);
   const size_t tx = get_local_id(0);
-  const unsigned  tid = bx * blockSize + tx; 
+  const unsigned  tid = (bx * blockSize + tx)%(n/2); /*Since n/2 threads are reqd to compute for n. */ 
   const float TWOPI = -1 * 2*3.14159265359;
+  const unsigned base = (((bx * blockSize + tx)/(n/2)) * (n/2))*2 ; /*Since n/2 threads compute on n elems at a time.*/
+
 
   int l = n/2; 
   int m = 1;
@@ -33,22 +35,22 @@ stockham(  __global float * r_real, __global float * r_imag,
       
       theta = TWOPI * j / (2.0 * l);
       
-      c0_real = r_real[k + j*m];
-      c0_imag = r_imag[k + j*m];
+      c0_real = r_real[base + k + j*m];
+      c0_imag = r_imag[base + k + j*m];
 
-      c1_real = r_real[k + j*m + l*m];
-      c1_imag = r_real[k + j*m + l*m];
+      c1_real = r_real[base + k + j*m + l*m];
+      c1_imag = r_real[base + k + j*m + l*m];
 
       //y[k + 2*j*m] = c0 + c1
       
-      r_real[k + 2*j*m] = c0_real + c1_real;
-      r_imag[k + 2*j*m] = c0_imag + c1_imag;
+      r_real[base + k + 2*j*m] = c0_real + c1_real;
+      r_imag[base + k + 2*j*m] = c0_imag + c1_imag;
       
       real_diff = c0_real - c1_real;
       imag_diff = c0_imag - c1_imag;
       
-      r_real[k + 2*j*m + m] = cos(theta)*(real_diff) - sin(theta)*(imag_diff);
-      r_imag[k + 2*j*m + m] = cos(theta)*(imag_diff) + sin(theta)*(real_diff);  
+      r_real[base + k + 2*j*m + m] = cos(theta)*(real_diff) - sin(theta)*(imag_diff);
+      r_imag[base + k + 2*j*m + m] = cos(theta)*(imag_diff) + sin(theta)*(real_diff);  
 
       //change values of m,l,j
       j = j/2;
