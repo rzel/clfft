@@ -26,8 +26,8 @@ sande_tookeyFFT(const char* const argv[], const unsigned n,
         
         allocateDeviceMemory(i , workSize[i], workOffset[i]);
         
-        clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void*) &d_Rreal[i]);
-        clSetKernelArg(kernel[i], 1, sizeof(cl_mem), (void*) &d_Rimag[i]);
+        clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void*) &d_Freal[i]);
+        clSetKernelArg(kernel[i], 1, sizeof(cl_mem), (void*) &d_Fimag[i]);
 	clSetKernelArg(kernel[i], 2, sizeof(unsigned), &n);
 	clSetKernelArg(kernel[i], 3, sizeof(unsigned), &powN);
 	clSetKernelArg(kernel[i], 4, sizeof(unsigned), &blockSize);
