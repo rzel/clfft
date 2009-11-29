@@ -96,7 +96,9 @@ main(const int argc, const char* argv[])
         result = runCooleyTukey(argv, sampleSize, inputSize);
     } else if (fftAlgo == STOCKHALM) {
         result = runStockhamFFT(argv, sampleSize, inputSize);
-    } else {
+    } else if (fftAlgo == SANDE_TOOKEY) {
+        sande_tookeyFFT(argv, sampleSize, inputSize);
+    }else {
         cout << "Wrong FFT_ALGO config" << endl;
         result = false;
     }
