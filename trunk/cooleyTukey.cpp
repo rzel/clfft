@@ -9,7 +9,7 @@ static unsigned workSize[MAX_GPU_COUNT];
 bool 
 runCooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
 {
-     if (!initExecution(size)) {
+  if (!initExecution(size, n)) {
          return false;
      }
      unsigned sizeOnGPU = 0;

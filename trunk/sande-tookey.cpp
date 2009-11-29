@@ -1,12 +1,26 @@
 #include "clutil.h"
 #include "fft.h"
+#include "kernels.h"
 
 static unsigned workOffset[MAX_GPU_COUNT];
 static unsigned workSize[MAX_GPU_COUNT];
 
+bool
+runSande_tookeyFFT(const char* const argv[], const unsigned n,
+                                         const unsigned size)
+{
+  if (!initExecution(size, n)) {
+         return false;
+    }
+    sande_tookeyFFTGpu(argv, n, size);
+    return true;
+}
+
+
+
 
 int
-sande_tookeyFFT(const char* const argv[], const unsigned n,
+sande_tookeyFFTGpu(const char* const argv[], const unsigned n,
                                              const unsigned size)
 
 {
@@ -49,9 +63,9 @@ sande_tookeyFFT(const char* const argv[], const unsigned n,
     }
 
     for (unsigned i = 0; i < deviceCount; ++i) {
-        copyFromDevice(i, d_Rreal[i], h_Rreal + workOffset[i],
+        copyFromDevice(i, d_Freal[i], h_Rreal + workOffset[i],
                                                 workSize[i]); 
-        copyFromDevice(i, d_Rimag[i], h_Rimag + workOffset[i],
+        copyFromDevice(i, d_Fimag[i], h_Rimag + workOffset[i],
                                                  workSize[i]);
     }
 
@@ -59,9 +73,6 @@ sande_tookeyFFT(const char* const argv[], const unsigned n,
     const cl_int ciErrNum = clWaitForEvents(deviceCount, gpuDone);
     checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
 
-    printf("Results : \n");
-    for (unsigned i = 0; i < size; ++i) {
-      printf("%d %f + i%f \n",i, h_Rreal[i], h_Rimag[i]);
-    }
+    printGpuTime();
     return 1;
 }

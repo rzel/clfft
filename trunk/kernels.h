@@ -30,10 +30,13 @@ void
 stockhamFFTGpu(const char* const argv[], const unsigned n,
                                          const unsigned size);
 
-int
-sande_tookeyFFT(const char* const argv[], const unsigned n,
+bool
+runSande_tookeyFFT(const char* const argv[], const unsigned n,
                                          const unsigned size);
 
+int
+sande_tookeyFFTGpu(const char* const argv[], const unsigned n,
+		   const unsigned size);
 // FOR CPU
 void
 slowFFTCpu(const unsigned start, const unsigned N, const unsigned size);

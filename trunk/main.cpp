@@ -101,7 +101,7 @@ main(const int argc, const char* argv[])
         result = runStockhamFFT(argv, sampleSize, inputSize);
     } else if (fftAlgo == SANDE_TOOKEY) {
       cout<< "At sande tookey"<<endl;  
-      result = sande_tookeyFFT(argv, sampleSize, inputSize);
+      result = runSande_tookeyFFT(argv, sampleSize, inputSize);
     }else {
         cout << "Wrong FFT_ALGO config" << endl;
         result = false;

@@ -3,7 +3,7 @@
  */
 
 __kernel void
-sande-tookey( __global float * r_real, __global float * r_imag,
+sande_tookey( __global float * r_real, __global float * r_imag,
 	  const unsigned n, const unsigned powN, const unsigned blockSize)
 {
 
@@ -12,12 +12,6 @@ sande-tookey( __global float * r_real, __global float * r_imag,
   const unsigned  tid = (bx * blockSize + tx)%(n/2); /*Since n/2 threads are reqd to compute for n. */ 
   const float TWOPI = -1 * 2*3.14159265359;
   const unsigned base = (((bx * blockSize + tx)/(n/2)) * (n/2))*2 ; /*Since n/2 threads compute on n elems at a time.*/
-
-  int l = n/2; 
-  int m = 1;
-  int j = tid;
-  int k=0;
-
 
   int r,j,mh;
   float theta;
@@ -30,9 +24,9 @@ sande-tookey( __global float * r_real, __global float * r_imag,
   for(int i=1; i < (powN ); i++)
     {
 
-      r = ((tid%i) * (N/i));
+      r = ((tid%i) * (n/i));
       j = tid/i;
-      mh = (N/2) / i;
+      mh = (n/2) / i;
 
       theta = TWOPI * j / (2 * mh);
 
