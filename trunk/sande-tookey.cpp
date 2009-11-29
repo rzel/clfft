@@ -12,7 +12,7 @@ sande_tookeyFFT(const char* const argv[], const unsigned n,
 {
     const unsigned powN = (unsigned)log2(n);
     printf("Compiling sande-tookey Program..\n");
-    compileProgram(argv, "fft.h", "kernels/sande-tookey.cl");
+    compileProgram(argv, "fft.h", "kernels/sande_tookey.cl");
 
     printf("Creating Kernel\n");
     for (unsigned i = 0; i < deviceCount; ++i) {
