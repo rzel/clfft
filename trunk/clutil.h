@@ -11,6 +11,7 @@
 #define SLOW_FFT 1
 #define COOLEY_TUKEY 2
 #define STOCKHALM 3
+#define SANDE_TOOKEY 4
 
 unsigned initExecution(const unsigned size);
 void partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU);
