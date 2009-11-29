@@ -40,8 +40,8 @@ readConfig(const char* const fName)
             }   
             blockSize = val;
         } else if (!strcmp(config, "FFT_ALGO")) {
-            if (val > 3) {
-                cout << "FFT_ALGO config should be 1, 2 or 3" << endl;
+            if (val > 4) {
+                cout << "FFT_ALGO config should be from 1 to 4." << endl;
                 return false;
             }
             fftAlgo = val;
@@ -88,6 +88,7 @@ main(const int argc, const char* argv[])
     cout << "USE_GPU " << deviceCount << endl;
     cout << "BLOCK_SIZE " << blockSize << endl;
     cout << "PRINT_RESULT " << print << endl;
+    cout << "FFT ALGO "<< fftAlgo << endl;
 
     bool result = true;
     if (fftAlgo == SLOW_FFT) {
@@ -97,7 +98,8 @@ main(const int argc, const char* argv[])
     } else if (fftAlgo == STOCKHALM) {
         result = runStockhamFFT(argv, sampleSize, inputSize);
     } else if (fftAlgo == SANDE_TOOKEY) {
-        sande_tookeyFFT(argv, sampleSize, inputSize);
+      cout<< "At sande tookey\n"<<endl;  
+      sande_tookeyFFT(argv, sampleSize, inputSize);
     }else {
         cout << "Wrong FFT_ALGO config" << endl;
         result = false;
