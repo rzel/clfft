@@ -4,7 +4,6 @@
 */
 #include "clutil.h"
 
-unsigned deviceCount = 0;
 // global variables
 cl_context cxContext = 0;
 cl_program cpProgram = 0;
@@ -13,6 +12,11 @@ cl_command_queue commandQueue[MAX_GPU_COUNT];
 cl_event gpuExecution[MAX_GPU_COUNT];
 cl_event gpuDone[MAX_GPU_COUNT];
 
+// Default Configs
+unsigned useCpu = 0;
+unsigned deviceCount = 1;
+unsigned blockSize = 16;
+unsigned fftAlgo = 1;
 
 // host memory
 // h_Freal and h_Fimag represent the input signal to be transformed.
@@ -29,6 +33,7 @@ cl_mem d_Freal[MAX_GPU_COUNT];
 cl_mem d_Fimag[MAX_GPU_COUNT];
 cl_mem d_Rreal[MAX_GPU_COUNT];
 cl_mem d_Rimag[MAX_GPU_COUNT];
+
 
 double 
 executionTime(const unsigned device)
@@ -58,6 +63,14 @@ allocateHostMemory(const unsigned size)
 
     h_Rimag = (float *) malloc(sizeof(float) * size);
     checkError((h_Rimag != NULL), shrTRUE, "Could not allocate memory");
+
+    for (unsigned i = 0 ; i < size; ++i) {
+        h_Freal[i] = i + 1;
+        h_Fimag[i] = i + 1;
+        h_Rreal[i] = i + 1;
+        h_Rimag[i] = i + 1;
+    }
+
 }
 
 void
@@ -74,7 +87,7 @@ allocateDeviceMemory(const unsigned device, const unsigned size,
                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                         sizeof(float) * size,
                         h_Fimag + copyOffset);
-   copyToDevice(device, d_Fimag[device],  h_Fimag + copyOffset, size);
+    copyToDevice(device, d_Fimag[device],  h_Fimag + copyOffset, size);
 
     d_Rreal[device] = createDeviceBuffer(CL_MEM_WRITE_ONLY,
                                               sizeof(float) * size,
@@ -141,7 +154,6 @@ init_cl_context(const cl_device_type device_type)
 				        NULL, /* user data to be passed to err fn */
 				        &ciErrNum);
 
-    fprintf(stdout,"After createContext ..\n");
     checkError(ciErrNum, CL_SUCCESS, "clCreateContextFromType");
 }
 
@@ -252,7 +264,6 @@ void
 copyToDevice(const unsigned device, const cl_mem mem, 
              float* const hostPtr, const unsigned size)
 {
-    fprintf(stderr,"Copyting to device memory.\n");
     const cl_int ciErrNum = clEnqueueWriteBuffer(commandQueue[device], 
                                                 mem, CL_TRUE, 0, 
                                                 sizeof(float) * size, hostPtr, 

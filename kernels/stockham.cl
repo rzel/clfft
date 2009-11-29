@@ -7,13 +7,13 @@
 
 __kernel void
 stockham(  __global float * r_real, __global float * r_imag,
-	  int is, unsigned n, unsigned powN)
+	  const unsigned n, const unsigned powN, const unsigned blockSize)
 {
 
   const size_t bx = get_group_id(0);
   const size_t tx = get_local_id(0);
-  const unsigned  tid = bx * BLOCK_SIZE + tx; 
-  const float TWOPI = 2*3.14159265359;
+  const unsigned  tid = bx * blockSize + tx; 
+  const float TWOPI = -1 * 2*3.14159265359;
 
   int l = n/2; 
   int m = 1;
@@ -31,7 +31,7 @@ stockham(  __global float * r_real, __global float * r_imag,
       
       //do main computation here.
       
-      theta = is * TWOPI * j / (2.0 * l);
+      theta = TWOPI * j / (2.0 * l);
       
       c0_real = r_real[k + j*m];
       c0_imag = r_imag[k + j*m];

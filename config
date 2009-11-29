@@ -1,0 +1,10 @@
+# FFT_ALGO 
+# 1 SLOW_FFT
+# 2 COOLEY_TUKEY
+# 3 STOCKHALM
+#######################
+USE_CPU 0
+USE_GPU 1
+BLOCK_SIZE 16
+FFT_ALGO 3
+

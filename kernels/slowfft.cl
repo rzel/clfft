@@ -6,15 +6,15 @@
 __kernel void
 slowfft( __global float* f_real, __global float* f_imag,
 	 __global float* r_real, __global float* r_imag,
-	const unsigned n, const int is)
+	 const unsigned n, const unsigned blockSize)
 {
     const float PI = 3.14159265359;
-    const float ph = is*2.0*PI/n;
+    const float ph = -1 * 2.0 * PI/n;
 
     const size_t bx = get_group_id(0);
     const size_t tx = get_local_id(0);
 
-    const int addr = bx * BLOCK_SIZE + tx;
+    const int addr = bx * blockSize + tx;
     const int start = (addr / n)* n;
     const int end = (addr / n + 1) * n;
 
