@@ -4,10 +4,9 @@
 
 
 __kernel void
-reverse( __global float* f_real, __global float* f_imag,
-		__global float* r_real, __global float* r_imag,
+reverse(__global float* r_real, __global float* r_imag,
 		const unsigned  n, const unsigned powN,
-                const unsigned blockSize)
+                const unsigned blockSize,const unsigned size )
 
 {
 
@@ -34,15 +33,24 @@ reverse( __global float* f_real, __global float* f_imag,
 	// The Input vertex will be used as the Buffer vertex
 	// We will keep on changing the input and output
 	// So tht we dont need to use another Buffer Array
-	const unsigned to = lReverse + (addr / n) * n;
-	r_real[to] = f_real[addr];
-	r_imag[to] = f_imag[addr];
-
+	lIndex = addr%n;
+	float lRevTemp;
+	if(lReverse > lIndex)
+	{
+		const unsigned to = lReverse + (addr / n) * n;
+		lRevTemp   = r_real[addr];
+		r_real[addr] = r_real[to];
+		r_real[to] = lRevTemp;
+		lRevTemp   = r_imag[addr];
+		r_imag[addr] = r_imag[to];
+		r_imag[to]  = lRevTemp;
+	}
 	barrier(CLK_LOCAL_MEM_FENCE);
 	// Now we have to iterate powN times Iteratively
 
 	int lThread = (addr/(n/2))*n + addr%(n/2);
-	//lIndex =  addr % n;
+	if(lThread>size)
+		return;
 	lIndex =  lThread %n;
 	int Iter,nIter;
 	for(Iter =0 ,nIter =1;Iter<(powN);Iter ++,nIter*=2)
@@ -61,6 +69,6 @@ reverse( __global float* f_real, __global float* f_imag,
 		r_real[lIndexMult] = add_real - tmp_real;
 		r_imag[lIndexMult] = add_imag - tmp_imag;
 		barrier(CLK_LOCAL_MEM_FENCE);
-	}
+	} 
 }
 

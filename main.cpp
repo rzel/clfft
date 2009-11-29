@@ -102,11 +102,6 @@ main(const int argc, const char* argv[])
         cout << "Wrong FFT_ALGO config" << endl;
         result = false;
     }
-    if (!result) {
-        cleanup();
-        return 0;
-    }
-
     if (print) {
         printResult(inputSize);
     }

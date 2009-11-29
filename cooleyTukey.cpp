@@ -36,11 +36,10 @@ cooleyTukeyGpu(const char* const argv[], const unsigned n, const unsigned size)
         allocateDeviceMemory(i , workSize[i], workOffset[i]);
         clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void*) &d_Freal[i]);
         clSetKernelArg(kernel[i], 1, sizeof(cl_mem), (void*) &d_Fimag[i]);
-        clSetKernelArg(kernel[i], 2, sizeof(cl_mem), (void*) &d_Rreal[i]);
-        clSetKernelArg(kernel[i], 3, sizeof(cl_mem), (void*) &d_Rimag[i]);
-        clSetKernelArg(kernel[i], 4, sizeof(unsigned), &n); 
-        clSetKernelArg(kernel[i], 5, sizeof(unsigned), &powN);
-        clSetKernelArg(kernel[i], 6, sizeof(unsigned), &blockSize);
+        clSetKernelArg(kernel[i], 2, sizeof(unsigned), &n); 
+        clSetKernelArg(kernel[i], 3, sizeof(unsigned), &powN);
+        clSetKernelArg(kernel[i], 4, sizeof(unsigned), &blockSize);
+	clSetKernelArg(kernel[i], 5, sizeof(unsigned), &size);
 
         if ((i + 1) < deviceCount) {
             workOffset[i + 1] = workOffset[i] + workSize[i];
@@ -56,13 +55,9 @@ cooleyTukeyGpu(const char* const argv[], const unsigned n, const unsigned size)
     }
 
     for (unsigned i = 0; i < deviceCount; ++i) {   
-         copyFromDevice(i, d_Rreal[i], h_Rreal + workOffset[i],
-                                                 workSize[i]);
-         copyFromDevice(i, d_Rimag[i], h_Rimag + workOffset[i],
+	 copyFromDevice(i, d_Fimag[i], h_Rimag + workOffset[i],
 			 workSize[i]);
-	 copyFromDevice(i, d_Fimag[i], h_Fimag + workOffset[i],
-			 workSize[i]);
-	 copyFromDevice(i, d_Freal[i], h_Freal + workOffset[i],
+	 copyFromDevice(i, d_Freal[i], h_Rreal + workOffset[i],
 			 workSize[i]);
     }
 
