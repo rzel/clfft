@@ -6,13 +6,18 @@
 #define __CLUTIL__
 
 #include <oclUtils.h>
+#include<iostream>
 #define MAX_GPU_COUNT 2
 #define SLOW_FFT 1
 #define COOLEY_TUKEY 2
 #define STOCKHALM 3
 
+unsigned initExecution(const unsigned size);
+void partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU);
+
 void checkError(const cl_int ciErrNum, const cl_int ref, const char* const operation);
 
+void printResult(const unsigned size);
 
 void init_cl_context(cl_device_type device_type);
 
@@ -44,12 +49,15 @@ void allocateHostMemory(const unsigned size);
 void allocateDeviceMemory(const unsigned device, const unsigned size,
                                            const unsigned copyOffset);
 
+void printGpuTime();
+
 void cleanup();
 
 extern unsigned useCpu;
 extern unsigned useGpu;
 extern unsigned blockSize;
 extern unsigned fftAlgo;
+extern unsigned print;
 
 extern float*  h_Freal;
 extern float*  h_Fimag;

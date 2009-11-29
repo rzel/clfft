@@ -2,38 +2,46 @@
 #include "clutil.h"
 #include "fft.h"
 #include "kernels.h"
+#include <time.h>
+using namespace std;
 
 static unsigned workOffset[MAX_GPU_COUNT];
 static unsigned workSize[MAX_GPU_COUNT];
 
-int
+bool
 runSlowFFT(const char* const argv[], const unsigned n, 
                                   const unsigned size)
 {
-     //TODO:: split the work   
+     //TODO:: split the work according to the availability  
+     if (!initExecution(size)) {
+         return false;
+     }
+     
+     unsigned sizeOnGPU = 0;
+     unsigned sizeOnCPU = 0;
+     
+     partition(size, sizeOnGPU, sizeOnCPU);
+
      #pragma omp parallel for
      for (unsigned i = 0; i < 2; ++i) {
          if ( i == 0) {
-             slowFFTGpu(argv, n,  size / 2);
+             slowFFTGpu(argv, n,  sizeOnGPU);
          } else {
-             printf("Running on CPU..\n");
-             const unsigned start = size / 2;
-             slowFFTCpu(start, n, size / 2);
+             const unsigned start = sizeOnGPU;
+             slowFFTCpu(start, n, sizeOnCPU);
          }      
      }
-     printf("Results : \n");
-     for (unsigned i = 0; i < size; ++i) {
-        printf("%f + i%f \n", h_Rreal[i], h_Rimag[i]);
-     }
-     return 1;
+  
+     return true;
 }
 
 // FOR GPU
-int
+void
 slowFFTGpu(const char* const argv[], const unsigned n,
-                                             const unsigned size)
+                                     const unsigned size)
 
 {
+    if (size == 0) return;
     printf("Compiling slowFFT Program for GPU..\n");
     compileProgram(argv, "fft.h", "kernels/slowfft.cl");
 
@@ -78,8 +86,7 @@ slowFFTGpu(const char* const argv[], const unsigned n,
     // wait for copy event
     const cl_int ciErrNum = clWaitForEvents(deviceCount, gpuDone);
     checkError(ciErrNum, CL_SUCCESS, "clWaitForEvents");
-
-    return 1;
+    printGpuTime();
 }
 
 // FOR CPU
@@ -87,7 +94,10 @@ slowFFTGpu(const char* const argv[], const unsigned n,
 void
 slowFFTCpu(const unsigned offset, const unsigned N, const unsigned  size)
 {
+    if (size == 0) return;
     const float ph = ( -1 *2.0 * 3.14159265359) / N;
+    time_t start = time(NULL);
+    cout << "Running on CPU.." << endl;
     #pragma omp parallel for
     for (unsigned i = 0; i <  size / N; ++i) {
         for (unsigned j = 0; j < N; ++j) {
@@ -108,5 +118,7 @@ slowFFTCpu(const unsigned offset, const unsigned N, const unsigned  size)
             h_Rimag[index] = imag;
         }
     }
+    time_t end = time(NULL);
+    cout << "Cpu Time " << end - start << endl;
 }
 
