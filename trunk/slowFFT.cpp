@@ -20,7 +20,7 @@ runSlowFFT(const char* const argv[], const unsigned n,
      unsigned sizeOnGPU = 0;
      unsigned sizeOnCPU = 0;
      
-     partition(size, sizeOnGPU, sizeOnCPU);
+     partition(size, sizeOnGPU, sizeOnCPU,n);
 
      #pragma omp parallel for
      for (int i = 0; i < 2; ++i) {

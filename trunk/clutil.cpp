@@ -62,7 +62,7 @@ initExecution(const unsigned size, const unsigned samplesize)
 }
 
 void 
-partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU)
+partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU,const unsigned int N)
 {
     if (deviceCount == 0) {
         sizeOnGPU = 0;
@@ -75,7 +75,10 @@ partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU)
        sizeOnCPU = 0;
        return;
     }    
-    sizeOnCPU = (size / 1024) * 2;
+    sizeOnCPU = (size / 256) * 2;
+    if(sizeOnCPU<N)
+	    sizeOnCPU = N;
+
     sizeOnGPU = size - sizeOnCPU;
 }
 

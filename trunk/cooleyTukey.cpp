@@ -17,7 +17,7 @@ runCooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
      unsigned sizeOnGPU = 0;
      unsigned sizeOnCPU = 0; 
 
-     partition(size, sizeOnGPU, sizeOnCPU);
+     partition(size, sizeOnGPU, sizeOnCPU,n);
 
      #pragma omp parallel for 
      for (int i = 0; i < 2; ++i) {
@@ -94,7 +94,7 @@ cooleyTukeyCpu(const unsigned offset, const unsigned  N, const unsigned size)
     const unsigned powN = (unsigned)log2(N);
     const double start = omp_get_wtime();
     //TODO:: set the number of threads
-    #pragma omp parallel for
+   // #pragma omp parallel for
     for (int i = 0; i < (int)size; ++i) {
         unsigned int lIndex =  i % N;
         unsigned int lPosition  = 0;
@@ -108,9 +108,9 @@ cooleyTukeyCpu(const unsigned offset, const unsigned  N, const unsigned size)
         if (lPosition < powN) {
             lReverse = lReverse << (powN-  lPosition);
         }
-        lReverse = lReverse + (i / N) * N + offset;
-        h_Rreal[lReverse] = h_Freal[i + offset];
-        h_Rimag[lReverse] = h_Fimag[i + offset];
+        uint lTempReverse = lReverse + (i / N) * N + offset;
+        h_Rreal[lTempReverse] = h_Freal[i + offset];
+        h_Rimag[lTempReverse] = h_Fimag[i + offset];
     }
     const double twopi =  2 * 3.14159265358979323846;
     for (unsigned i = 0; i < size / N; ++i) {
