@@ -18,7 +18,7 @@
 #define SANDE_TOOKEY 4
 
 unsigned initExecution(const unsigned size, const unsigned n);
-void partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU);
+void partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU,const unsigned );
 
 void checkError(const cl_int ciErrNum, const cl_int ref, const char* const operation);
 
