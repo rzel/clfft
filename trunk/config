@@ -4,9 +4,8 @@
 # 3 STOCKHALM
 # 4 Sande-Tookey
 #######################
-USE_CPU 0
+USE_CPU 1
 USE_GPU 2
 BLOCK_SIZE 256
 FFT_ALGO 1
 PRINT_RESULT 0
-
