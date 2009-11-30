@@ -99,8 +99,7 @@ slowFFTCpu(const unsigned offset, const unsigned N, const unsigned  size)
     if (useCpu == 0) return;
     
     const float ph = ( -1 *2.0 * 3.14159265359) / N;
-    struct rusage start;
-    getrusage(RUSAGE_SELF, &start);
+    const double start = omp_get_wtime();
     cout << "Running on CPU.." << endl;
     #pragma omp parallel for
     for (unsigned i = 0; i <  size / N; ++i) {
@@ -122,8 +121,8 @@ slowFFTCpu(const unsigned offset, const unsigned N, const unsigned  size)
             h_Rimag[index] = imag;
         }
     }
-    struct rusage end;
-    getrusage(RUSAGE_SELF, &end);
-    printCpuTime(start, end);
+    const double end = omp_get_wtime();
+    cout << "CPU Time " << end - start << endl;
+    //printCpuTime(start, end);
 }
 
