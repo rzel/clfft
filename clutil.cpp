@@ -75,9 +75,8 @@ partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU)
        sizeOnCPU = 0;
        return;
     }    
-
-    sizeOnGPU = (size / 2);
-    sizeOnCPU = size - sizeOnGPU; 
+    sizeOnCPU = (size / 1024) * 2;
+    sizeOnGPU = size - sizeOnCPU;
 }
 
 void 
