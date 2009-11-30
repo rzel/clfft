@@ -1,7 +1,9 @@
 #include "clutil.h"
 #include "fft.h"
 #include "kernels.h"
-
+#include <iostream>
+using namespace std;
+#include <omp.h>
 
 static unsigned workOffset[MAX_GPU_COUNT];
 static unsigned workSize[MAX_GPU_COUNT];
@@ -18,7 +20,7 @@ runCooleyTukey(const char* const argv[], const unsigned n, const unsigned size)
      partition(size, sizeOnGPU, sizeOnCPU);
 
      #pragma omp parallel for 
-     for (unsigned i = 0; i < 2; ++i) {
+     for (int i = 0; i < 2; ++i) {
          if ( i == 0) {
              cooleyTukeyGpu(argv, n,  sizeOnGPU);
          } else {
@@ -89,12 +91,11 @@ cooleyTukeyCpu(const unsigned offset, const unsigned  N, const unsigned size)
 {
     if (size == 0) return;
     if (useCpu == 0) return; 
-    struct rusage start;
-    getrusage(RUSAGE_SELF, &start);
     const unsigned powN = (unsigned)log2(N);
+    const double start = omp_get_wtime();
     //TODO:: set the number of threads
     #pragma omp parallel for
-    for (unsigned i = 0; i < size; ++i) {
+    for (int i = 0; i < (int)size; ++i) {
         unsigned int lIndex =  i % N;
         unsigned int lPosition  = 0;
         unsigned int lReverse= 0;
@@ -116,7 +117,7 @@ cooleyTukeyCpu(const unsigned offset, const unsigned  N, const unsigned size)
         for (unsigned p = 0; p < powN ; ++p ) {
             const unsigned powP = (unsigned)pow(2, p);
             #pragma omp parallel for
-            for (unsigned k = 0; k < N / 2; ++k) {
+            for (int k = 0; k < (int)N / 2; ++k) {
                 const unsigned indexAdd = i * N + (k /  powP)
                                             * 2 * powP + k % powP + offset;
 
@@ -138,7 +139,6 @@ cooleyTukeyCpu(const unsigned offset, const unsigned  N, const unsigned size)
            }
         }
     }
-    struct rusage end;
-    getrusage(RUSAGE_SELF, &end);
-    printCpuTime(start, end);
+     const double end = omp_get_wtime();
+     cout << "CPU Time " << end - start << endl;
 }

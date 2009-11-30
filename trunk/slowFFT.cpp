@@ -23,7 +23,7 @@ runSlowFFT(const char* const argv[], const unsigned n,
      partition(size, sizeOnGPU, sizeOnCPU);
 
      #pragma omp parallel for
-     for (unsigned i = 0; i < 2; ++i) {
+     for (int i = 0; i < 2; ++i) {
          if ( i == 0) {
              slowFFTGpu(argv, n,  sizeOnGPU);
          } else {
@@ -102,7 +102,7 @@ slowFFTCpu(const unsigned offset, const unsigned N, const unsigned  size)
     const double start = omp_get_wtime();
     cout << "Running on CPU.." << endl;
     #pragma omp parallel for
-    for (unsigned i = 0; i <  size / N; ++i) {
+    for (int i = 0; i <  (int)(size / N); ++i) {
         for (unsigned j = 0; j < N; ++j) {
             const unsigned index = i * N + j + offset ;
             const unsigned start = i * N + offset;
@@ -123,6 +123,5 @@ slowFFTCpu(const unsigned offset, const unsigned N, const unsigned  size)
     }
     const double end = omp_get_wtime();
     cout << "CPU Time " << end - start << endl;
-    //printCpuTime(start, end);
 }
 
