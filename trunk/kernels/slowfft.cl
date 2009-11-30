@@ -25,9 +25,11 @@ slowfft( __global float* f_real, __global float* f_imag,
         const float ix = f_imag[k];
 
         const float val = ph * (k-start) * (addr % n);
+	const float cs  = cos(val);
+	const float sn  = sin(val);
         /* cos(ph*k*w) --> where k from 1 to n and w from 1 to n. */
-        real+= rx* cos(val) - ix * sin(val);
-        imag+= rx* sin(val) + ix * cos(val);
+        real+= rx* cs - ix * sn;
+        imag+= rx* sn + ix * cs;
     }
 
     r_real[addr]= real;
