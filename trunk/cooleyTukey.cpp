@@ -140,5 +140,5 @@ cooleyTukeyCpu(const unsigned offset, const unsigned  N, const unsigned size)
         }
     }
      const double end = omp_get_wtime();
-     cout << "CPU Time " << end - start << endl;
+     cout << "CPU Time: " << end - start << endl;
 }
