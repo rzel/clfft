@@ -86,8 +86,8 @@ void
 printGpuTime()
 {
     for (unsigned k = 0; k < deviceCount; ++k) {
-        cout << "Kernel execution time on GPU " << k
-             << " :  " << executionTime(k) << " seconds" << endl;
+        cout << "Kernel execution Time on GPU " << k
+             << " : " << executionTime(k) << " seconds" << endl;
     }
 }
 
@@ -103,7 +103,7 @@ printCpuTime(struct rusage& start, struct rusage& end)
     const time_t diffSec =  endSec - startSec;
     const suseconds_t diffUsec =  endUsec - startUsec;
      
-    cout << "CPU Time Taken " 
+    cout << "CPU Time Taken :" 
          << diffSec << " seconds " 
          << diffUsec << " micro seconds"
          << endl;
@@ -148,10 +148,11 @@ allocateHostMemory(const unsigned size, const unsigned n)
     checkError((h_Rimag != NULL), shrTRUE, "Could not allocate memory");
 
     for (unsigned i = 0 ; i < size; ++i) {
-        h_Freal[i] = (i + 1)%n;
-        h_Fimag[i] = (i + 1)%n;
+      i%n == 0 ? h_Freal[i] = 1 : h_Freal[i] = 0;
+      i%n ==0 ? h_Fimag[i] = 1 : h_Fimag[i] = 0;
         h_Rreal[i] = 0;
         h_Rimag[i] = 0;
+	
     }
 
 }

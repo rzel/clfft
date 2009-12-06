@@ -13,7 +13,7 @@ stockham(  __global float * r_real, __global float * r_imag,
   const size_t bx = get_group_id(0);
   const size_t tx = get_local_id(0);
   const unsigned  tid = (bx * blockSize + tx)%(n/2); /*Since n/2 threads are reqd to compute for n. */ 
-  const float TWOPI = -1 * 2*3.14159265359;
+  const float TWOPI = 1 * 2*3.14159265359;
   const unsigned base = (((bx * blockSize + tx)/(n/2)) * (n/2))*2 ; /*Since n/2 threads compute on n elems at a time.*/
 
 
