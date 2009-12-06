@@ -57,7 +57,7 @@ cooleyTukeyGpu(const char* const argv[], const unsigned n, const unsigned size)
         clSetKernelArg(kernel[i], 2, sizeof(unsigned), &n); 
         clSetKernelArg(kernel[i], 3, sizeof(unsigned), &powN);
         clSetKernelArg(kernel[i], 4, sizeof(unsigned), &blockSize);
-	clSetKernelArg(kernel[i], 5, sizeof(unsigned), &size);
+	clSetKernelArg(kernel[i], 5, sizeof(unsigned), &sizePerGPU);
 
         if ((i + 1) < deviceCount) {
             workOffset[i + 1] = workOffset[i] + workSize[i];

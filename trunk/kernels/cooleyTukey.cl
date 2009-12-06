@@ -4,7 +4,7 @@
 
 
 __kernel void
-reverse(__global float* r_real, __global float* r_imag,
+reverse(__global float* const r_real, __global float* const r_imag,
 		const unsigned  n, const unsigned powN,
                 const unsigned blockSize,const unsigned size )
 
@@ -34,9 +34,9 @@ reverse(__global float* r_real, __global float* r_imag,
 	// We will keep on changing the input and output
 	// So tht we dont need to use another Buffer Array
 	lIndex = addr%n;
-	float lRevTemp;
 	if(lReverse > lIndex)
 	{
+                float lRevTemp;
 		const unsigned to = lReverse + (addr / n) * n;
 		lRevTemp   = r_real[addr];
 		r_real[addr] = r_real[to];
@@ -48,22 +48,27 @@ reverse(__global float* r_real, __global float* r_imag,
 	barrier(CLK_LOCAL_MEM_FENCE);
 	// Now we have to iterate powN times Iteratively
 
-	int lThread = (addr/(n/2))*n + addr%(n/2);
+	const unsigned lThread = (addr/(n/2))*n + addr%(n/2);
+
 	if(lThread>size)
 		return;
 	lIndex =  lThread %n;
 	int Iter,nIter;
 	for(Iter =0 ,nIter =1;Iter<(powN);Iter ++,nIter*=2)
 	{
-		int lIndexAdd  =  (lThread/n)*n + (lIndex/nIter)*2*nIter + lIndex%nIter ;
-		int lIndexMult =  lIndexAdd +nIter ;
-		int k  = lIndex%nIter;
-		float cs =  cos(TWOPI*k/(2*nIter));
-		float sn =  sin(TWOPI*k/(2*nIter));
-		float add_real =  r_real[lIndexAdd];
-		float add_imag =  r_imag[lIndexAdd] ;
-		float tmp_real = cs*r_real[lIndexMult] + sn * r_imag[lIndexMult];
-		float tmp_imag = cs*r_imag[lIndexMult] - sn * r_real[lIndexMult]; 
+		const unsigned lIndexAdd  =  (lThread/n)*n + (lIndex/nIter)*2*nIter + lIndex%nIter ;
+		const unsigned  lIndexMult =  lIndexAdd +nIter ;
+		const unsigned k  = lIndex%nIter;
+		const float cs =  cos(TWOPI*k/(2*nIter));
+		const float sn =  sin(TWOPI*k/(2*nIter));
+		const float add_real =  r_real[lIndexAdd];
+		const float add_imag =  r_imag[lIndexAdd] ;
+                const float mult_real = r_real[lIndexMult];
+                const float mult_imag = r_imag[lIndexMult];
+		const float tmp_real = cs*mult_real
+                                       + sn * mult_imag;
+		const float tmp_imag = cs*mult_imag - sn 
+                                       * mult_real; 
 		r_real[lIndexAdd] = add_real + tmp_real;
 		r_imag[lIndexAdd] = add_imag + tmp_imag;
 		r_real[lIndexMult] = add_real - tmp_real;
