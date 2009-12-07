@@ -39,7 +39,7 @@ stockham(  __global float * r_real, __global float * r_imag,
       c0_imag = r_imag[base + k + j*m];
 
       c1_real = r_real[base + k + j*m + l*m];
-      c1_imag = r_real[base + k + j*m + l*m];
+      c1_imag = r_imag[base + k + j*m + l*m];
 
       //y[k + 2*j*m] = c0 + c1
       

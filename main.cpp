@@ -38,8 +38,8 @@ readConfig(const char* const fName)
             }   
             blockSize = val;
         } else if (!strcmp(config, "FFT_ALGO")) {
-            if (val > 4) {
-                cout << "FFT_ALGO config should be from 1 to 4." << endl;
+            if (val > 5) {
+                cout << "FFT_ALGO config should be from 1 to 5." << endl;
                 return false;
             }
             fftAlgo = val;
@@ -100,9 +100,13 @@ main(const int argc, const char* argv[])
     } else if (fftAlgo == STOCKHALM) {
         result = runStockhamFFT(argv, sampleSize, inputSize);
     } else if (fftAlgo == SANDE_TOOKEY) {
-      cout<< "At sande tookey"<<endl;  
       result = runSande_tookeyFFT(argv, sampleSize, inputSize);
-    }else {
+    }else if (fftAlgo == BLUESTEINS) {
+      cout<< "At Bluesteins"<<endl;  
+      result = runBluesteinsFFT(argv, sampleSize, inputSize);
+    }
+
+    else {
         cout << "Wrong FFT_ALGO config" << endl;
         result = false;
     }
