@@ -37,6 +37,15 @@ runSande_tookeyFFT(const char* const argv[], const unsigned n,
 int
 sande_tookeyFFTGpu(const char* const argv[], const unsigned n,
 		   const unsigned size);
+
+bool
+runBluesteinsFFT(const char * const argv[], const unsigned n,
+		 const unsigned size);
+
+void
+bluesteinsFFTGpu(const char* const argv[],const unsigned n, 
+		 const unsigned orign,const unsigned size);
+
 // FOR CPU
 void
 slowFFTCpu(const unsigned start, const unsigned N, const unsigned size);

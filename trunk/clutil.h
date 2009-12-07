@@ -16,6 +16,7 @@
 #define COOLEY_TUKEY 2
 #define STOCKHALM 3
 #define SANDE_TOOKEY 4
+#define BLUESTEINS 5
 
 unsigned initExecution(const unsigned size, const unsigned n);
 void partition(const unsigned size, unsigned& sizeOnGPU, unsigned& sizeOnCPU,const unsigned );
