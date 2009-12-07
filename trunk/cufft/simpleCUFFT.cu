@@ -40,7 +40,7 @@ int PadData(const Complex*, Complex**, int,
 void runTest(int argc, char** argv);
 
 // The filter size is assumed to be a number smaller than the signal size
-#define SIGNAL_SIZE        1048576
+//#define SIGNAL_SIZE        1048576
 //#define SIGNAL_SIZE      4194304
 #define FILTER_KERNEL_SIZE 10
 
@@ -51,7 +51,6 @@ int main(int argc, char** argv)
 {
     runTest(argc, argv);
 
-    cutilExit(argc, argv);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -60,11 +59,13 @@ int main(int argc, char** argv)
 void runTest(int argc, char** argv) 
 {
 	cudaSetDevice( cutGetMaxGflopsDeviceId() );
-    if (argc == 1) {
-        printf("./a.out N\n\n"); 
+    if (argc == 2) {
+        printf("./a.out size N\n\n"); 
         return;
     } 
-    const unsigned N = atoi(argv[1]);
+          
+    const unsigned SIGNAL_SIZE = atoi(argv[1]);
+    const unsigned N = atoi(argv[2]);
     // Allocate host memory for the signal
     Complex* h_signal = (Complex*)malloc(sizeof(Complex) * SIGNAL_SIZE);
     // Initalize the memory for the signal
